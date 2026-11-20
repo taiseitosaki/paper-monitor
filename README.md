@@ -53,7 +53,6 @@ flowchart LR
 |---|---|
 | [`index.html`](index.html) | 研究ライブラリ（台帳ページ）。Artifact として公開する |
 | [`config/topic.json`](config/topic.json) | テーマ設定（ライブラリ名、分類、対象判定、検索語、各情報源の検索条件）。[設定項目の説明](docs/configuration.md) |
-| [`config/examples/`](config/examples/) | 設定の記入例 |
 | [`spec/operating-spec.md`](spec/operating-spec.md) | 運用仕様書。定期実行の各セッションが従う手順 |
 | [`templates/paper-template.html`](templates/paper-template.html) | 論文解説ページのテンプレート（ページ内チャット・メモボタン付き） |
 | [`prompts/`](prompts/) | 5つの定期タスクのプロンプト |
@@ -80,7 +79,7 @@ flowchart LR
 
 ## 使い始める
 
-[`docs/setup.md`](docs/setup.md) を見てください。おおまかには、`config/topic.json` を書く → ライブラリを Artifact として公開する → 5つの定期タスクを作る、の3段階です。Claude Code のクラウドセッションでこのリポジトリを開き、「docs/setup.md に従ってセットアップして」と頼めば進められます。
+[`docs/setup.md`](docs/setup.md) を見てください。おおまかには、Claude と相談してテーマ設定（`config/topic.json`）を決める → ライブラリを Artifact として公開する → 5つの定期タスクを作る、の3段階です。Claude Code のクラウドセッションでこのリポジトリを開き、「docs/setup.md に従ってセットアップして」と頼めば、Claude が質問しながら進めます。
 
 ## 必要なもの
 

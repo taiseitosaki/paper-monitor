@@ -1,5 +1,5 @@
 {
-  "_comment": "テーマ設定。監視したい研究テーマに合わせて書き換える。値の意味は docs/configuration.md。記入例は config/examples/。",
+  "_comment": "テーマ設定。監視したい研究テーマに合わせて書き換える。値の意味は docs/configuration.md。最初のセットアップで Claude と相談しながら埋める（docs/setup.md の 1.）。",
 
   "library_name": "Research Library",
   "short_name": "Research Library",

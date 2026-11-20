@@ -2,29 +2,34 @@
 
 Claude Code のクラウドセッションで、このリポジトリを開いて行います。手順はどれも Claude に頼めます（「docs/setup.md に従ってセットアップして」）。
 
-## 1. テーマを設定する
+## 1. テーマを決める（Claude と相談しながら）
 
-[`config/topic.json`](../config/topic.json) を、監視したいテーマに合わせて書き換えます。項目の意味は [configuration.md](configuration.md)、記入例は [`config/examples/`](../config/examples/) にあります。
+[`config/topic.json`](../config/topic.json) は空のひな形です。最初のセットアップでは、Claude が利用者に質問しながら一緒に埋めます。項目の意味は [configuration.md](configuration.md) にあります。
 
-書いたら、取得スクリプトを一度ずつ動かして、候補がほどよく拾えるか確かめます。
+### Claude が進める手順
 
-```bash
-python3 -I scripts/arxiv_list.py /tmp/arxiv.json
-```
+1. **テーマを聞く**: 監視したい研究テーマ、とくに追いたい論文・モデル・データセットの例（あれば3〜5本）、対象外にしたいもの、主に読む情報源（arXiv だけでよいか、medRxiv・bioRxiv・PubMed・OpenReview も要るか）、実行時刻とタイムゾーンを、まとめて短く聞く。わからない項目は Claude が案を出す。
+2. **案を作る**: 答えをもとに、`library_name`・`field_ja`・`description_ja`・`categories`（3〜5個の分類と名前）・`scope`（対象・対象外・キー論文の範囲）・`search_terms`・`known_names` の案を書き、利用者に見せて直す。
+3. **検索条件を作って試す**: `sources` の各項目（arXiv のカテゴリと題名の正規表現、medRxiv / bioRxiv の正規表現、PubMed の検索式、OpenReview の語群）を書き、取得スクリプトを直近1週間ほどで実行する。
 
-```bash
-python3 -I scripts/medrxiv_fetch.py 2026-11-01 2026-11-07 /tmp/medrxiv.json
-```
+   ```bash
+   python3 -I scripts/arxiv_list.py /tmp/arxiv.json
+   ```
 
-```bash
-python3 -I scripts/pubmed_fetch.py 7 /tmp/pubmed.json
-```
+   ```bash
+   python3 -I scripts/medrxiv_fetch.py 2026-11-01 2026-11-07 /tmp/medrxiv.json
+   ```
 
-```bash
-python3 -I scripts/openreview_fetch.py 2026-11-01 /tmp/openreview.json
-```
+   ```bash
+   python3 -I scripts/pubmed_fetch.py 7 /tmp/pubmed.json
+   ```
 
-使わない情報源は `sources` から外し、[`prompts/daily.md`](../prompts/daily.md) の手順3からもそのスクリプトを外します。
+   ```bash
+   python3 -I scripts/openreview_fetch.py 2026-11-01 /tmp/openreview.json
+   ```
+
+4. **結果を見せて調整する**: 情報源ごとの件数と、印が付いた候補（`topic_match`・`priority`）の題名を見せる。利用者が挙げた例の論文や、明らかに関係する論文が漏れていないか、無関係なものが多すぎないかを一緒に確かめ、正規表現・検索式・語群を直して再実行する。利用者が納得するまで繰り返す。
+5. **確定する**: 使わない情報源は `sources` から外し、[`prompts/daily.md`](../prompts/daily.md) の手順3からもそのスクリプトを外す。`library_url` は 2. の公開後に書くので空のままにする。
 
 ## 2. 研究ライブラリを公開する
 
