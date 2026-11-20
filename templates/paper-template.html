@@ -1,0 +1,619 @@
+<title>【短い論文名】 解説</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<!--
+  Research Library — 論文解説ページ テンプレート v1
+  使い方（定期実行セッション向け）:
+   1. このファイルを papers/<paper_id>/index.html としてコピーし、【…】を全て置き換える。
+   2. 公開ファイル: figs/*.png, source/chunks.json, source/manifest.json（運用仕様書 §7）。
+   3. Artifact publish: capabilities = {"sample": {"images": true}, "comments": {"composer_only": true}}、icon = "paper"（comments は末尾の「メモ・依頼」ボタン用。運用仕様書 §6.3）。
+   4. 置き換え漏れ検査: grep -n "【" index.html が 0 件であること。
+   {{LIBRARY_NAME}} / {{LIBRARY_URL}} / {{FIELD}} / {{EXAMPLE_QUESTION}} は scripts/build_page.py が config/topic.json から差し込む。
+  原著に存在しない数値・構造・結果を書かないこと。
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>
+  window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }, svg: { fontCache: 'global' } };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js" async></script>
+<style>
+/* Layout: journal-style reading column with a sticky section index on wide screens; discussion panel closes the page. */
+:root {
+  --bg: #f8f9fb;
+  --surface: #ffffff;
+  --fg: #18212c;
+  --muted: #586474;
+  --rule: #d9dfe7;
+  --accent: #23578a;
+  --accent-soft: #e6eef7;
+  --ok: #1f7a4d; --ok-bg: #e5f3ec;
+  --part: #946200; --part-bg: #fbf1dc;
+  --unv: #5b6472; --unv-bg: #eceff3;
+  --over: #a8322d; --over-bg: #f9e6e4;
+  --code-bg: #eef1f5;
+  --f-display: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --f-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161c; --surface: #1a2028; --fg: #e3e8ee; --muted: #9aa5b3; --rule: #2d3643;
+  --accent: #8cb8e6; --accent-soft: #1f2d3d;
+  --ok: #6fcf9c; --ok-bg: #173226; --part: #e6b65c; --part-bg: #33290f;
+  --unv: #a9b2be; --unv-bg: #252c36; --over: #f08a84; --over-bg: #3a1d1b; --code-bg: #212833;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #12161c; --surface: #1a2028; --fg: #e3e8ee; --muted: #9aa5b3; --rule: #2d3643;
+  --accent: #8cb8e6; --accent-soft: #1f2d3d;
+  --ok: #6fcf9c; --ok-bg: #173226; --part: #e6b65c; --part-bg: #33290f;
+  --unv: #a9b2be; --unv-bg: #252c36; --over: #f08a84; --over-bg: #3a1d1b; --code-bg: #212833;
+  color-scheme: dark; }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 16px; line-height: 1.8; }
+.wrap { max-width: 72rem; margin: 0 auto; padding-block: 2rem 4rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; grid-template-columns: 13rem minmax(0, 1fr); gap: 3rem; }
+@media (max-width: 900px) { .wrap { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; } nav.toc { display: none; } }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1.5rem); align-self: start; font-size: 0.82rem; line-height: 1.5; }
+nav.toc .lib { display: block; margin-bottom: 1rem; color: var(--muted); text-decoration: none; letter-spacing: 0.04em; font-size: 0.75rem; text-transform: uppercase; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; counter-reset: s; }
+nav.toc a { color: var(--muted); text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); }
+nav.toc .chat-link { margin-top: 1.2rem; display: inline-block; padding: 0.45rem 0.8rem; border: 1px solid var(--accent); border-radius: 4px; color: var(--accent); }
+main { min-width: 0; max-width: 46rem; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; line-height: 1.4; }
+h1 { font-size: 1.75rem; margin: 0.3rem 0 0.8rem; }
+h2 { font-size: 1.3rem; margin: 3rem 0 1rem; padding-top: 0.8rem; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.05rem; margin: 1.8rem 0 0.6rem; }
+p, li { max-width: 65ch; }
+a { color: var(--accent); }
+.eyebrow { font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.meta { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.3rem 1.2rem; font-size: 0.9rem; margin: 1rem 0; }
+.meta dt { color: var(--muted); }
+.meta dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.mono, code { font-family: var(--f-mono); font-size: 0.88em; }
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; }
+.scope { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 0.9rem 1.1rem; font-size: 0.9rem; }
+.scope strong { display: block; margin-bottom: 0.3rem; }
+.scope ul { margin: 0; padding-left: 1.2rem; }
+.summary { background: var(--accent-soft); border-radius: 6px; padding: 1rem 1.2rem; }
+.summary p { margin: 0.4rem 0; }
+figure { margin: 1.6rem 0; }
+figure img { display: block; max-width: 100%; height: auto; background: #fff; border: 1px solid var(--rule); border-radius: 4px; }
+figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.5rem; line-height: 1.6; }
+figcaption .src { display: block; font-family: var(--f-mono); font-size: 0.78rem; margin-top: 0.2rem; }
+.redrawn { font-size: 0.72rem; letter-spacing: 0.05em; border: 1px solid var(--rule); border-radius: 3px; padding: 0 0.35rem; margin-right: 0.4rem; }
+.tbl { overflow-x: auto; margin: 1.2rem 0; }
+table { border-collapse: collapse; font-size: 0.86rem; min-width: 100%; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; vertical-align: top; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--rule); }
+th { font-weight: 500; color: var(--muted); white-space: nowrap; }
+td.num { text-align: right; font-family: var(--f-mono); }
+@media (max-width: 700px) { .tbl table.wide { min-width: 40rem; } }
+.verdict { display: inline-block; white-space: nowrap; font-size: 0.78rem; font-weight: 500; padding: 0.05rem 0.5rem; border-radius: 99px; }
+.v-ok { color: var(--ok); background: var(--ok-bg); }
+.v-part { color: var(--part); background: var(--part-bg); }
+.v-unv { color: var(--unv); background: var(--unv-bg); }
+.v-over { color: var(--over); background: var(--over-bg); }
+.four { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 1.2rem 0; }
+@media (max-width: 640px) { .four { grid-template-columns: minmax(0, 1fr); } }
+.four > div { min-width: 0; border-top: 3px solid var(--rule); padding-top: 0.6rem; font-size: 0.92rem; }
+.four h4 { margin: 0 0 0.4rem; font-size: 0.85rem; }
+.four .k1 { border-color: var(--unv); } .four .k2 { border-color: var(--accent); } .four .k3 { border-color: var(--ok); } .four .k4 { border-color: var(--part); }
+.ref { font-family: var(--f-mono); font-size: 0.78rem; color: var(--muted); }
+mjx-container[display="true"] { overflow-x: auto; overflow-y: hidden; padding: 0.3rem 0; }
+
+/* Discussion panel */
+#chat { margin-top: 3.5rem; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); padding: 1.2rem; }
+#chat h2 { border: 0; margin-top: 0; padding-top: 0; }
+#chat .scope-list { font-size: 0.85rem; color: var(--muted); }
+#chat .scope-list ul { margin: 0.3rem 0 0; padding-left: 1.2rem; }
+#figpick { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; font-size: 0.82rem; margin: 0.8rem 0; }
+#figpick label { display: inline-flex; gap: 0.3rem; align-items: center; cursor: pointer; }
+#log { display: grid; gap: 0.9rem; margin: 1rem 0; max-height: 70vh; overflow-y: auto; }
+.msg { min-width: 0; padding: 0.7rem 0.9rem; border-radius: 6px; font-size: 0.92rem; line-height: 1.75; overflow-wrap: anywhere; }
+.msg.user { background: var(--accent-soft); justify-self: end; max-width: 85%; white-space: pre-wrap; }
+.msg.bot { background: var(--bg); border: 1px solid var(--rule); }
+.msg.bot p { margin: 0.4rem 0; }
+.msg.bot pre { background: var(--code-bg); padding: 0.6rem; border-radius: 4px; overflow-x: auto; }
+.msg.note { color: var(--muted); font-size: 0.82rem; padding: 0; }
+.examples { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.6rem 0; }
+.examples button { font: inherit; font-size: 0.8rem; color: var(--accent); background: transparent; border: 1px solid var(--rule); border-radius: 99px; padding: 0.25rem 0.75rem; cursor: pointer; text-align: left; }
+.composer { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.6rem; align-items: end; }
+#q { font: inherit; font-size: 0.95rem; width: 100%; min-height: 4.5rem; resize: vertical; padding: 0.6rem; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg); color: var(--fg); box-sizing: border-box; }
+.btns { display: grid; gap: 0.4rem; }
+.btns button, .opts select { font: inherit; font-size: 0.85rem; padding: 0.45rem 0.9rem; border-radius: 5px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; }
+.btns button.secondary { background: transparent; color: var(--accent); }
+.btns button:disabled { opacity: 0.45; cursor: default; }
+.opts { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; }
+.opts select { background: var(--bg); color: var(--fg); border-color: var(--rule); padding: 0.2rem 0.4rem; }
+#status { font-size: 0.8rem; color: var(--muted); min-height: 1.2em; }
+#unavail { font-size: 0.88rem; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+html { scroll-behavior: smooth; }
+</style>
+
+<div class="wrap">
+<nav class="toc" aria-label="目次">
+  <a class="lib" href="{{LIBRARY_URL}}">← {{LIBRARY_NAME}}</a>
+  <ol>
+    <li><a href="#info">Paper Information</a></li>
+    <li><a href="#summary">Executive Summary</a></li>
+    <li><a href="#background">Background</a></li>
+    <li><a href="#method">Method</a></li>
+    <li><a href="#training">Training &amp; Inference</a></li>
+    <li><a href="#design">Experimental Design</a></li>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#evidence">Independent Evidence Assessment</a></li>
+    <li><a href="#prior">Comparison with Prior Work</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+    <li><a href="#refs">References &amp; Sources</a></li>
+  </ol>
+  <a class="chat-link" href="#chat">原著と議論する</a>
+</nav>
+
+<main>
+<article id="explainer">
+<section id="info">
+  <div class="eyebrow">【分類（config/topic.json の categories。例: B 分類Bの名前 / C 分類Cの名前）】</div>
+  <h1>【正式タイトル（原文）】</h1>
+  <dl class="meta">
+    <dt>著者</dt><dd>【著者（所属）】</dd>
+    <dt>初回公開</dt><dd>【YYYY-MM-DD（v1）】</dd>
+    <dt>確認した版</dt><dd>【vN（YYYY-MM-DD）】</dd>
+    <dt>掲載先・査読</dt><dd>【例: arXiv プレプリント（未査読） / 会議名 採択】</dd>
+    <dt>識別子</dt><dd class="mono">【arXiv: 2610.xxxxx ・ DOI: …】</dd>
+    <dt>原著</dt><dd><a href="【PDF URL】">PDF</a> ・ <a href="【HTML/Abs URL】">論文ページ</a> ・ 【補足資料リンク】 ・ 【コード/モデルリンク】</dd>
+    <dt>解説作成</dt><dd>【YYYY-MM-DD】（Claude による。原著の本文・図表・補足資料を直接確認）</dd>
+  </dl>
+  <div class="scope">
+    <strong>この解説で確認した資料</strong>
+    <ul>
+      <li>【本文 全Nページ（vN）— テキストと全ページ画像で図表を確認】</li>
+      <li>【Appendix / Supplementary（ページ範囲）】</li>
+      <li>【主要先行研究: 論文名（確認した節）】</li>
+      <li>【未取得・未確認の資料があれば明記】</li>
+    </ul>
+  </div>
+</section>
+
+<section id="summary">
+  <h2>Executive Summary</h2>
+  <div class="summary">
+    <p><b>問題設定</b> 【…】</p>
+    <p><b>提案手法</b> 【…】</p>
+    <p><b>主要な結果</b> 【指標・タスク・データセット・比較条件を明示した数値】</p>
+    <p><b>実験から支持される結論</b> 【独立検証を踏まえた結論。著者の主張と区別する】</p>
+  </div>
+</section>
+
+<section id="background">
+  <h2>Background and Research Question</h2>
+  <p>【研究領域の背景 / 既存研究が実現していること / 未解決の問題 / 本研究の具体的な研究課題 / 取り組む理由】</p>
+</section>
+
+<section id="method">
+  <h2>Method</h2>
+  <p>【モデル全体構造、入力データの形式と表現（Tokenization など）、時間・構造情報の扱い、各階層・各段階の処理、出力形式、主要構成要素の役割】</p>
+  <figure>
+    <img src="figs/【fig1.png】" alt="【図の内容を説明する代替テキスト】" loading="lazy">
+    <figcaption>【図の説明（本文と対応）】<span class="src">出典: 原著 Figure 【N】（p.【X】, v【Y】）。ライセンス: 【CC BY 4.0 等】</span></figcaption>
+  </figure>
+  <p>数式例: \( x_{1:T} \) を入力の系列とし … 【原著の定式化に忠実に、記号を定義】</p>
+</section>
+
+<section id="training">
+  <h2>Training and Inference</h2>
+  <h3>事前学習</h3>
+  <p>【事前学習タスク、目的関数、学習データの構成、学習時の入力と出力】</p>
+  \[ \mathcal{L}(\theta) = \text{【原著の目的関数】} \]
+  <h3>推論・適応</h3>
+  <p>【推論時の入力と出力、Fine-tuning / Zero-shot / Few-shot の方法】</p>
+  <div class="tbl"><table>
+    <thead><tr><th></th><th>学習時</th><th>推論時</th></tr></thead>
+    <tbody>
+      <tr><th>入力</th><td>【…】</td><td>【…】</td></tr>
+      <tr><th>出力</th><td>【…】</td><td>【…】</td></tr>
+      <tr><th>更新されるパラメータ</th><td>【…】</td><td>【…】</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="design">
+  <h2>Experimental Design</h2>
+  <div class="tbl"><table>
+    <tbody>
+      <tr><th>データセット・対象集団</th><td>【…】</td></tr>
+      <tr><th>分割（学習/検証/テスト）</th><td>【分割の単位（個体・時間など）、事前学習データとの関係】</td></tr>
+      <tr><th>評価タスク</th><td>【…】</td></tr>
+      <tr><th>評価指標</th><td>【…】</td></tr>
+      <tr><th>ベースライン</th><td>【…（学習条件の同等性）】</td></tr>
+      <tr><th>主要な実験条件</th><td>【…】</td></tr>
+      <tr><th>Ablation・追加解析</th><td>【…】</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="results">
+  <h2>Results</h2>
+  <p>【主要な定量結果。数値ごとに指標・タスク・データセット・比較条件を明示】</p>
+  <figure>
+    <img src="figs/【table2.png】" alt="【…】" loading="lazy">
+    <figcaption>【…】<span class="src">出典: 原著 Table 【N】（p.【X】）</span></figcaption>
+  </figure>
+  <div class="tbl"><table>
+    <caption class="ref" style="caption-side: bottom; text-align: left; padding-top: 0.4rem;"><span class="redrawn">再構成</span>原著 Table 【N】の数値に基づく抜粋（値は原著のまま）</caption>
+    <thead><tr><th>手法</th><th>【タスク1 / 指標】</th><th>【タスク2 / 指標】</th></tr></thead>
+    <tbody>
+      <tr><td>【ベースライン】</td><td class="num">【0.000】</td><td class="num">【0.000】</td></tr>
+      <tr><td>【提案法】</td><td class="num">【0.000】</td><td class="num">【0.000】</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="evidence">
+  <h2>Independent Evidence Assessment</h2>
+  <h3>主張と証拠の対応</h3>
+  <div class="tbl"><table class="wide">
+    <thead><tr><th>著者の主張</th><th>検証している実験</th><th>直接確認できる内容</th><th>判定</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td>【…】</td><td><span class="ref">【Table 2, Fig. 3, App. C】</span></td><td>【…】</td><td><span class="verdict v-ok">支持される</span></td><td>【…】</td></tr>
+      <tr><td>【…】</td><td><span class="ref">【…】</span></td><td>【…】</td><td><span class="verdict v-part">部分的に支持</span></td><td>【…】</td></tr>
+      <tr><td>【…】</td><td><span class="ref">【…】</span></td><td>【…】</td><td><span class="verdict v-unv">未検証</span></td><td>【…】</td></tr>
+      <tr><td>【…】</td><td><span class="ref">【…】</span></td><td>【…】</td><td><span class="verdict v-over">評価範囲を超える</span></td><td>【…】</td></tr>
+    </tbody>
+  </table></div>
+  <h3>実験方法の妥当性</h3>
+  <p>【ベースラインの選定と条件の同等性、データ分割、情報漏洩・時点の利用可能性、事前学習データと評価データの関係、指標の適切性、必要なAblationの有無。結論に実質的に影響するものを優先】</p>
+  <h3>結果の解釈</h3>
+  <p>【改善の所在（データセット・タスク）、一貫性、改善幅、機序の説明をAblationが支持するか、汎化主張と評価範囲】</p>
+  <div class="four">
+    <div class="k1"><h4>1. 著者が主張している内容</h4>【…】</div>
+    <div class="k2"><h4>2. 原著の結果から直接確認できる内容</h4>【…】</div>
+    <div class="k3"><h4>3. 結果によって支持される解釈</h4>【…】</div>
+    <div class="k4"><h4>4. 現時点で十分に検証されていない内容</h4>【…】</div>
+  </div>
+</section>
+
+<section id="prior">
+  <h2>Comparison with Prior Work</h2>
+  <p>【先行研究が実際にどの形式・段階で対象を扱っているかを確認した上での共通点・差異。構成要素 / 学習目的 / 問題設定 / 評価の新規性を区別】</p>
+  <div class="tbl"><table class="wide">
+    <thead><tr><th>研究</th><th>アーキテクチャ</th><th>事前学習目的</th><th>入力・時間表現</th><th>評価</th></tr></thead>
+    <tbody>
+      <tr><td>【本研究】</td><td>【…】</td><td>【…】</td><td>【…】</td><td>【…】</td></tr>
+      <tr><td>【先行研究】</td><td>【…】</td><td>【…】</td><td>【…】</td><td>【…】</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="conclusion">
+  <h2>Conclusion</h2>
+  <p>【この研究が具体的に実現したこと、残された課題】</p>
+</section>
+
+<section id="refs">
+  <h2>References and Source Materials</h2>
+  <ul>
+    <li>原著: 【書誌情報、URL、確認した版】</li>
+    <li>Supplementary: 【URL / 未公開】</li>
+    <li>コード・モデル: 【URL / 未公開】</li>
+    <li>先行研究: 【書誌情報、URL】</li>
+    <li>図表の出典: 本ページの原著図は 【ライセンス】 に基づき出典を明記して掲載。再構成表は原著の数値のみを使用。</li>
+  </ul>
+</section>
+</article>
+
+<div class="scope" id="feedback"><strong>メモと修正依頼（コメント）</strong>本文の文を選ぶと出る「メモ・依頼」ボタン（または claude.ai のコメントモード）で、その箇所にコメントを付けられます。投稿するときのボタンで、メモか修正依頼かが決まります。<ul><li><b>メモ</b>: ふつうに投稿する（「Send to Claude」を押さず、@claude とも書かない）。解説の修正には使われず、論文横断の議論で Claude が参照します。</li><li><b>修正・追加の依頼</b>: 「Send to Claude」で送るか、コメントに @claude と書く。毎朝の定期実行（5:00 JST ごろ）で原著と照らし合わせて反映し、何をどう直したかをそのスレッドに返信します。</li><li>投稿したコメントは書き換えられません。メモの書き足し・訂正は同じスレッドへの返信で。メモを依頼にしたいときは、そのスレッドに「Send to Claude」で返信してください。</li></ul></div>
+
+<section id="chat" aria-labelledby="chat-h">
+  <h2 id="chat-h">原著と議論する</h2>
+  <div class="scope-list" id="scope">参照資料を読み込み中…</div>
+  <div id="unavail" hidden></div>
+  <div id="chatui" hidden>
+    <div id="figpick" aria-label="質問に添付する図表"></div>
+    <div class="examples" id="examples"></div>
+    <div id="log" aria-live="polite"></div>
+    <div id="status"></div>
+    <div class="composer">
+      <label for="q" class="eyebrow" style="grid-column: 1 / -1;">質問（原著本文・補足資料・図表に基づいて回答します）</label>
+      <textarea id="q" placeholder="例: 事前学習の目的関数を数式から説明して"></textarea>
+      <div class="btns">
+        <button id="send" type="button">送信</button>
+        <button id="stop" type="button" class="secondary" disabled>停止</button>
+      </div>
+    </div>
+    <div class="opts">
+      <label for="tier">回答モデル</label>
+      <select id="tier"><option value="default">標準</option><option value="complex">高精度（時間がかかる）</option></select>
+      <button id="clear" type="button" class="secondary" style="font-size:0.8rem;padding:0.15rem 0.6rem;border:1px solid var(--rule);background:transparent;color:var(--muted);border-radius:4px;cursor:pointer;">会話をリセット</button>
+    </div>
+  </div>
+</section>
+</main>
+</div>
+
+<script>
+/* 例示質問（論文ごとに書き換える。Methods 詳細と Supplementary に関する質問を含める） */
+const EXAMPLES = [
+  "【Methodsの詳細に関する質問例】",
+  "【Supplementary の結果・図表に関する質問例】",
+  "ベースラインと提案法の学習条件（データ量・計算量・ハイパーパラメータ探索）は同等ですか？",
+  "{{EXAMPLE_QUESTION}}"
+];
+
+const $ = (s) => document.querySelector(s);
+const S = { chunks: [], manifest: null, index: null, turns: [], sample: null, ctl: null, busy: false, tools: false, maxImages: 0 };
+const STOP = new Set("a an the of in on for to and or is are was were be by with as at from that this these those it its we our their which into than then also can not no".split(" "));
+
+function tokens(s) {
+  const out = [];
+  const re = /[a-z0-9][a-z0-9_.\-]*[a-z0-9]|[a-z0-9]|[\u3040-\u30ff\u3400-\u9fff]+/g;
+  for (const m of String(s).toLowerCase().normalize("NFKC").matchAll(re)) {
+    const t = m[0];
+    if (/^[\u3040-\u30ff\u3400-\u9fff]+$/.test(t)) {
+      if (t.length === 1) out.push(t); else for (let i = 0; i < t.length - 1; i++) out.push(t.slice(i, i + 2));
+    } else if (!STOP.has(t)) out.push(t);
+  }
+  return out;
+}
+
+function buildIndex(chunks) {
+  const df = new Map(); let total = 0;
+  const docs = chunks.map((c) => {
+    const tf = new Map(); const toks = tokens(c.section + " " + c.text);
+    for (const t of toks) tf.set(t, (tf.get(t) || 0) + 1);
+    for (const t of tf.keys()) df.set(t, (df.get(t) || 0) + 1);
+    total += toks.length; return { tf, len: toks.length };
+  });
+  return { df, docs, avg: total / Math.max(1, docs.length), n: docs.length };
+}
+
+function search(query, { doc, k = 6 } = {}) {
+  const ix = S.index; if (!ix) return [];
+  const q = [...new Set(tokens(query))]; const k1 = 1.4, b = 0.5;
+  const figRef = String(query).match(/\b(fig(?:ure)?|tab(?:le)?)\.?\s*([a-z]?\d+[a-z]?)/i);
+  const scored = [];
+  S.chunks.forEach((c, i) => {
+    if (doc && !(c.doc === doc || c.doc.startsWith(doc))) return;
+    const d = ix.docs[i]; let s = 0;
+    for (const t of q) {
+      const f = d.tf.get(t); if (!f) continue;
+      const idf = Math.log(1 + (ix.n - ix.df.get(t) + 0.5) / (ix.df.get(t) + 0.5));
+      s += idf * (f * (k1 + 1)) / (f + k1 * (1 - b + b * d.len / ix.avg));
+    }
+    if (figRef) {
+      const n = figRef[2]; const kind = figRef[1][0].toLowerCase() === "f" ? "fig(?:ure)?\\.?" : "tab(?:le)?\\.?";
+      if (new RegExp("\\b" + kind + "\\s*" + n + "\\b", "i").test(c.text + " " + c.section)) s += 6;
+    }
+    if (s > 0) scored.push([s, i]);
+  });
+  scored.sort((a, b2) => b2[0] - a[0]);
+  return scored.slice(0, Math.min(10, Math.max(1, k))).map(([s, i]) => {
+    const c = S.chunks[i];
+    return { id: c.id, doc: c.doc, section: c.section, page: c.page, score: Number(s.toFixed(2)), snippet: snippet(c.text, q) };
+  });
+}
+
+function snippet(text, q) {
+  const low = text.toLowerCase(); let pos = -1;
+  for (const t of q) { pos = low.indexOf(t); if (pos >= 0) break; }
+  const start = Math.max(0, pos - 250);
+  return (start > 0 ? "…" : "") + text.slice(start, start + 700) + (start + 700 < text.length ? "…" : "");
+}
+
+function readChunks(ids) {
+  const out = []; let used = 0;
+  for (const id of (Array.isArray(ids) ? ids : [ids]).map(String).slice(0, 8)) {
+    const c = S.chunks.find((x) => x.id === id);
+    if (!c) { out.push({ id, error: "not found" }); continue; }
+    if (used + c.text.length > 27000) { out.push({ id, error: "size limit; request fewer chunks" }); continue; }
+    used += c.text.length; out.push({ id: c.id, doc: c.doc, section: c.section, page: c.page, text: c.text });
+  }
+  return out;
+}
+
+function contents() {
+  const secs = []; let last = null;
+  for (const c of S.chunks) {
+    const key = c.doc + "|" + c.section;
+    if (last && last.key === key) { last.last_id = c.id; last.pages[1] = c.page ?? last.pages[1]; continue; }
+    last = { key, doc: c.doc, section: c.section, first_id: c.id, last_id: c.id, pages: [c.page ?? null, c.page ?? null] };
+    secs.push(last);
+  }
+  const m = S.manifest || {};
+  let res = { documents: m.documents || [], missing: m.missing || [], figures: (m.figures || []).map((f) => ({ id: f.id, label: f.label, page: f.page })), sections: secs.map(({ key, ...r }) => r) };
+  let js = JSON.stringify(res);
+  while (js.length > 30000 && res.sections.length > 20) { res.sections = res.sections.filter((_, i) => i % 2 === 0); res.note = "section list thinned; use search_source"; js = JSON.stringify(res); }
+  return res;
+}
+
+function explainerChunks() {
+  return [...document.querySelectorAll("#explainer section")].map((sec) => ({
+    id: "explainer-" + sec.id, doc: "explainer", section: (sec.querySelector("h1,h2")?.textContent || sec.id).trim(), page: null,
+    text: sec.innerText.replace(/\s+\n/g, "\n").trim().slice(0, 9000)
+  }));
+}
+
+function rules() {
+  const m = S.manifest || {};
+  const docs = (m.documents || []).map((d) => `- ${d.doc}: ${d.title}${d.version ? " (" + d.version + ")" : ""}${d.pages ? ", " + d.pages + " pages" : ""}`).join("\n");
+  return `あなたは{{FIELD}}の論文読解を支援する研究者です。対象論文: 「${m.paper_title || document.title}」。
+利用者は解説ページを読んだ研究者で、原著に基づく議論を求めています。
+
+参照できる資料（ツールで検索・取得できる全文チャンク）:
+${docs}
+- explainer: このページの日本語解説（Claudeが作成。原著ではない）
+- figure-notes: 解説作成時に図表を画像で確認した記録（作成者メモ。原著ではない）
+- verification: 独立検証で行った再計算・照合の記録（作成者メモ。原著ではない）
+未取得の資料: ${(m.missing || []).join(" / ") || "なし"}
+
+回答の規則:
+1. 事実に関する回答は必ず search_source / read_chunks で原著の該当箇所を確認してから書く。記憶や推測で原著の内容を補わない。
+2. 根拠には [doc §節名 p.ページ] の形で出典を付ける（例: [main §3.2 p.5]、[appendix Table 10 p.26]）。
+3. 原著に記載がない事項は「原著には記載がない」と明言し、そのうえで一般的知識による考察を述べる場合は考察であると区別する。
+4. 著者の主張、結果から直接確認できる内容、あなたの解釈を区別する。
+5. explainer・figure-notes・verification は二次資料。原著と食い違う場合は原著を優先し、食い違いを指摘する。
+6. 添付画像がある場合、それは原著の図表のクロップ画像。画像から読み取れる値と読み取れない値を区別する。
+7. 日本語で、研究者向けに簡潔かつ正確に。数式は \\( \\) / \\[ \\] の LaTeX で書く。`;
+}
+
+const TOOLDEFS = () => [
+  { name: "list_contents", description: "参照資料（原著本文 main、Appendix appendix、補足資料 supp、参考文献 refs、先行研究 prior:*、後続論文 followup:*、explainer、figure-notes、verification）の節一覧・図表一覧・未取得資料を返す。どこに何が書かれているか把握したいときに使う。", execute: () => contents() },
+  { name: "search_source", description: "参照資料の全文をキーワード検索し、上位チャンクの id・doc・節・ページ・抜粋を返す。英語の原文用語（例: 'masked', 'Table 3', 'learning rate'）で検索すると精度が高い。doc で 'main' 'appendix' 'supp' 'prior' 等に絞れる。",
+    inputSchema: { type: "object", properties: { query: { type: "string" }, doc: { type: "string", description: "任意。main / appendix / supp / refs / prior / followup / explainer / figure-notes / verification" }, k: { type: "integer", description: "返す件数（1-10、既定6）" } }, required: ["query"] },
+    execute: (inp) => { setStatus("原著を検索中: " + String(inp.query || "")); return search(String(inp.query || ""), { doc: inp.doc ? String(inp.doc) : undefined, k: Number(inp.k) || 6 }); } },
+  { name: "read_chunks", description: "チャンク id（search_source の結果）を指定して全文を返す。一度に最大8件、合計約27,000字まで。",
+    inputSchema: { type: "object", properties: { ids: { type: "array", items: { type: "string" } } }, required: ["ids"] },
+    execute: (inp) => { setStatus("該当箇所を読んでいます"); return readChunks(inp.ids); } }
+];
+
+function setStatus(t) { $("#status").textContent = t; }
+function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function md(src) {
+  const blocks = String(src).split(/```/);
+  return blocks.map((b, i) => {
+    if (i % 2) return "<pre><code>" + esc(b.replace(/^[a-z]*\n/, "")) + "</code></pre>";
+    return esc(b).split(/\n{2,}/).map((p) => {
+      let h = p.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>");
+      if (/^\s*([-*]|\d+\.)\s/m.test(h) && h.split("\n").every((l) => /^\s*([-*]|\d+\.)\s|^\s{2,}/.test(l) || !l.trim())) {
+        return "<ul>" + h.split("\n").filter((l) => l.trim()).map((l) => "<li>" + l.replace(/^\s*([-*]|\d+\.)\s/, "") + "</li>").join("") + "</ul>";
+      }
+      if (/^#{1,4}\s/.test(h)) return "<p><b>" + h.replace(/^#{1,4}\s/, "") + "</b></p>";
+      return "<p>" + h.replace(/\n/g, "<br>") + "</p>";
+    }).join("");
+  }).join("");
+}
+function typeset(el) { try { window.MathJax?.typesetPromise?.([el]).catch(() => {}); } catch (e) {} }
+function bubble(cls, html) { const d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html; $("#log").append(d); $("#log").scrollTop = $("#log").scrollHeight; return d; }
+
+const ERR = {
+  not_granted: "このページでの Claude の利用が許可されていません。ページの権限設定から許可できます。",
+  sampling_disabled: "このアカウントでは Claude を呼び出せません。",
+  rate_limited: "利用回数の上限に達しました。しばらく待ってから再度送信してください。",
+  session_expired: "サインインし直してください。",
+  prompt_too_large: "会話が長くなりすぎました。「会話をリセット」してから質問してください。",
+  refused: "この質問には回答できませんでした。質問を言い換えてください。",
+  image_rejected: "添付した図表画像を送信できませんでした。添付を外して再送してください。",
+  tools_unavailable: "このビューでは検索ツールを使えません。",
+};
+
+async function send(text) {
+  const q = (text ?? $("#q").value).trim(); if (!q || S.busy) return;
+  $("#q").value = ""; S.busy = true; $("#send").disabled = true; $("#stop").disabled = false;
+  bubble("user", esc(q));
+  const picked = [...document.querySelectorAll("#figpick input:checked")].map((x) => x.value);
+  let content = q;
+  if (picked.length) content += "\n\n（添付画像: " + picked.map((id) => (S.manifest.figures.find((f) => f.id === id) || {}).label || id).join(", ") + "）";
+  if (!S.tools) {
+    const hits = search(q, { k: 8 }).map((h) => readChunks([h.id])[0]).filter((c) => c && !c.error);
+    content += "\n\n[ページ内検索で取得した原著の関連箇所]\n" + hits.map((c) => `<<${c.id} | ${c.doc} §${c.section} p.${c.page ?? "-"}>>\n${c.text}`).join("\n\n").slice(0, 120000);
+  }
+  S.turns.push({ role: "user", content });
+  const out = bubble("bot", "考えています…");
+  S.ctl = new AbortController();
+  const opts = { signal: S.ctl.signal, modelTier: $("#tier").value, onText: ({ text }) => { out.innerHTML = md(text); $("#log").scrollTop = $("#log").scrollHeight; } };
+  if (S.tools) opts.tools = TOOLDEFS(); else opts.cache = false;
+  if (picked.length && S.maxImages) {
+    opts.images = await Promise.all(picked.slice(0, S.maxImages).map(async (id) => {
+      const f = S.manifest.figures.find((x) => x.id === id); const r = await fetch(f.file); return r.blob();
+    }));
+  }
+  const recent = S.turns.slice(-12); while (recent.length && recent[0].role !== "user") recent.shift();
+  try {
+    const { text: ans, truncated } = await S.sample([{ role: "user", content: rules() }, ...recent], opts);
+    out.innerHTML = md(ans); typeset(out);
+    S.turns.push({ role: "assistant", content: ans });
+    if (truncated) bubble("note", "回答が長さの上限で途中終了しました。質問を分けてください。");
+  } catch (e) {
+    if (e && e.text) { out.innerHTML = md(e.text); typeset(out); } else out.remove();
+    if (e?.code !== "cancelled") bubble("note", esc(ERR[e?.code] || "回答を取得できませんでした。もう一度送信してください。"));
+    if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled"].includes(e?.code)) disableChat(ERR[e.code] || "");
+  } finally {
+    S.busy = false; $("#send").disabled = false; $("#stop").disabled = true; setStatus("");
+    document.querySelectorAll("#figpick input:checked").forEach((x) => { x.checked = false; });
+  }
+}
+
+function disableChat(msg) {
+  $("#chatui").hidden = true; $("#unavail").hidden = false;
+  $("#unavail").innerHTML = "<p>" + esc(msg || "このビューではページ内チャットを利用できません。") + "</p><p>代わりに、下記の原著PDFを Claude の新しい会話に添付して質問できます。参照範囲は添付した資料に限られます。</p>" +
+    ((S.manifest?.documents || []).map((d) => d.url ? `<a href="${esc(d.url)}">${esc(d.title)}</a>` : "").filter(Boolean).join(" ・ "));
+}
+
+async function init() {
+  try {
+    const [m, c] = await Promise.all([fetch("source/manifest.json").then((r) => r.json()), fetch("source/chunks.json").then((r) => r.json())]);
+    S.manifest = m; S.chunks = c.concat(explainerChunks()); S.index = buildIndex(S.chunks);
+  } catch (e) {
+    $("#scope").textContent = "参照資料を読み込めませんでした。ページを再読み込みしてください。"; return;
+  }
+  const m = S.manifest;
+  $("#scope").innerHTML = "<b>このチャットが参照する資料</b>（全文を検索して回答します）<ul>" +
+    (m.documents || []).map((d) => `<li>${esc(d.title)}${d.version ? "（" + esc(d.version) + "）" : ""}${d.pages ? " — " + d.pages + "ページ" : ""}</li>`).join("") +
+    "<li>このページの解説と、図表を画像で確認した記録（二次資料）</li>" +
+    ((m.missing || []).length ? `<li>未取得: ${m.missing.map(esc).join(" / ")}</li>` : "") + "</ul>";
+  $("#figpick").innerHTML = (m.figures || []).length ? "<span class='eyebrow' style='width:100%'>質問に図表を添付</span>" +
+    m.figures.map((f) => `<label><input type="checkbox" value="${esc(f.id)}" id="fig-${esc(f.id)}">${esc(f.label)}</label>`).join("") : "";
+  $("#examples").innerHTML = EXAMPLES.map((q, i) => `<button type="button" data-i="${i}">${esc(q)}</button>`).join("");
+  $("#examples").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) send(EXAMPLES[b.dataset.i]); });
+
+  const sample = await window.claude?.use?.("sample");
+  if (!sample) { disableChat(); return; }
+  S.sample = sample;
+  const lim = await sample.limits().catch(() => null);
+  S.tools = !!lim?.tools; S.maxImages = lim?.images?.maxCount || 0;
+  if (!S.maxImages) $("#figpick").hidden = true;
+  $("#chatui").hidden = false;
+  $("#send").onclick = () => send();
+  $("#stop").onclick = () => S.ctl?.abort();
+  $("#clear").onclick = () => { S.turns = []; $("#log").innerHTML = ""; };
+  $("#q").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send(); });
+}
+init();
+</script>
+
+<!-- memo-button v1（運用仕様書 §6.3）: 本文の文を選ぶと「メモ・依頼」ボタンを出し、claude.ai のコメント入力欄をその箇所の引用付きで開く。削除しない。 -->
+<style>
+.memo-btn { position: absolute; z-index: 50; display: none; font: inherit; font-size: 0.8rem; font-weight: 500; line-height: 1.4; padding: 0.3rem 0.75rem; border-radius: 5px; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18); cursor: pointer; white-space: nowrap; }
+.memo-btn.on { display: inline-block; }
+.memo-btn:hover, .memo-btn:focus-visible { background: var(--accent); color: var(--surface); }
+#feedback ul { margin: 0.3rem 0 0; }
+#feedback li + li { margin-top: 0.2rem; }
+</style>
+<button type="button" class="memo-btn" id="memo-btn" data-uncommentable aria-label="選んだ箇所にコメント（メモまたは修正依頼）を付ける">メモ・依頼</button>
+<script>
+(() => {
+  const btn = document.getElementById("memo-btn"), root = document.getElementById("explainer") || document.querySelector("main");
+  let cm = null, range = null, off = false, timer = 0;
+  const hide = () => { btn.classList.remove("on"); range = null; };
+  const place = () => {
+    if (!cm || off || !root) return hide();
+    const sel = document.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount || !sel.toString().trim()) return hide();
+    const r = sel.getRangeAt(0);
+    const node = r.commonAncestorContainer.nodeType === 1 ? r.commonAncestorContainer : r.commonAncestorContainer.parentElement;
+    if (!root.contains(node) || node.closest("#chat, #feedback")) return hide();
+    const rects = r.getClientRects(), last = rects[rects.length - 1] || r.getBoundingClientRect();
+    range = r.cloneRange();
+    btn.classList.add("on");
+    const w = btn.offsetWidth, maxX = document.documentElement.clientWidth + window.scrollX - w - 8;
+    btn.style.left = Math.max(8 + window.scrollX, Math.min(last.right + window.scrollX - w / 2, maxX)) + "px";
+    btn.style.top = (last.bottom + window.scrollY + 14) + "px";
+  };
+  document.addEventListener("selectionchange", () => { clearTimeout(timer); timer = setTimeout(place, 200); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") hide(); });
+  btn.addEventListener("pointerdown", (e) => e.preventDefault()); // keep the selection while the button is pressed
+  btn.addEventListener("click", async () => {
+    if (!range || !cm) return;
+    const r = range;
+    hide();
+    try {
+      const res = await cm.openComposer({ range: r });
+      if (res && res.opened) { try { document.getSelection().removeAllRanges(); } catch (e) {} }
+    } catch (e) {
+      if (e && ["unavailable", "not_granted", "capability_disabled", "capability_removed"].includes(e.code)) off = true;
+    }
+  });
+  try { window.claude?.use?.("comments").then((c) => { cm = c; }).catch(() => {}); } catch (e) {}
+})();
+</script>
+<!-- /memo-button -->

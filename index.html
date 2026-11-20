@@ -1,0 +1,552 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Research Library</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a register (ledger) page — run status strip, then the paper ledger as the main body, then digests and operating documents. */
+:root {
+  --bg: #f8f9fb; --surface: #ffffff; --fg: #18212c; --muted: #586474; --rule: #d9dfe7;
+  --accent: #23578a; --accent-soft: #e6eef7;
+  --ok: #1f7a4d; --ok-bg: #e5f3ec; --warn: #946200; --warn-bg: #fbf1dc;
+  --bad: #a8322d; --bad-bg: #f9e6e4; --idle: #5b6472; --idle-bg: #eceff3;
+  --f-display: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --f-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161c; --surface: #1a2028; --fg: #e3e8ee; --muted: #9aa5b3; --rule: #2d3643; --accent: #8cb8e6; --accent-soft: #1f2d3d;
+  --ok: #6fcf9c; --ok-bg: #173226; --warn: #e6b65c; --warn-bg: #33290f; --bad: #f08a84; --bad-bg: #3a1d1b; --idle: #a9b2be; --idle-bg: #252c36;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #12161c; --surface: #1a2028; --fg: #e3e8ee; --muted: #9aa5b3; --rule: #2d3643; --accent: #8cb8e6; --accent-soft: #1f2d3d;
+  --ok: #6fcf9c; --ok-bg: #173226; --warn: #e6b65c; --warn-bg: #33290f; --bad: #f08a84; --bad-bg: #3a1d1b; --idle: #a9b2be; --idle-bg: #252c36;
+  color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.7; }
+.wrap { max-width: 76rem; margin: 0 auto; padding-block: 2rem 4rem; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 2.2rem; }
+header h1 { font-family: var(--f-display); font-size: 1.7rem; margin: 0; text-wrap: balance; line-height: 1.35; }
+header p { margin: 0.4rem 0 0; color: var(--muted); max-width: 70ch; }
+h2 { font-family: var(--f-display); font-size: 1.15rem; margin: 0 0 0.8rem; }
+.eyebrow { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+a { color: var(--accent); }
+.run { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 1rem 1.2rem; display: grid; gap: 0.7rem; }
+.run-head { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; align-items: baseline; }
+.run-head .date { font-family: var(--f-mono); font-size: 0.95rem; }
+.sources { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.note { font-size: 0.88rem; color: var(--muted); max-width: 80ch; white-space: pre-line; }
+.chip { display: inline-block; white-space: nowrap; font-size: 0.74rem; font-weight: 500; padding: 0.05rem 0.55rem; border-radius: 99px; }
+.c-ok { color: var(--ok); background: var(--ok-bg); } .c-warn { color: var(--warn); background: var(--warn-bg); }
+.c-bad { color: var(--bad); background: var(--bad-bg); } .c-idle { color: var(--idle); background: var(--idle-bg); }
+.c-acc { color: var(--accent); background: var(--accent-soft); }
+.filters { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; margin-bottom: 0.8rem; font-size: 0.85rem; }
+.filters input, .filters select { font: inherit; font-size: 0.85rem; padding: 0.35rem 0.55rem; border: 1px solid var(--rule); border-radius: 5px; background: var(--surface); color: var(--fg); }
+.filters input { min-width: 0; width: 18rem; max-width: 100%; }
+.count { color: var(--muted); font-variant-numeric: tabular-nums; }
+.wrap > *, .grid2 > * { min-width: 0; }
+.sortbtn { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; white-space: nowrap; }
+.sortbtn:hover { color: var(--accent); }
+th[aria-sort] .sortbtn.on { color: var(--fg); font-weight: 700; }
+.sortbtn .arrow { display: inline-block; width: 1em; text-align: center; }
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; table-layout: fixed; width: 72rem; font-size: 0.86rem; }
+th { position: relative; overflow: hidden; text-overflow: ellipsis; }
+.colgrip { position: absolute; top: 0; right: 0; width: 9px; height: 100%; cursor: col-resize; z-index: 1; touch-action: none; }
+.colgrip::after { content: ""; position: absolute; top: 25%; bottom: 25%; left: 4px; width: 1px; background: var(--rule); }
+.colgrip:hover::after, .colgrip:focus-visible::after, .colgrip.drag::after { background: var(--accent); width: 2px; left: 3px; }
+/* A cell never paints into its neighbour: long values wrap inside the column (even when a column is dragged narrow), and anything unbreakable is clipped at the cell edge. */
+td { overflow-wrap: anywhere; overflow: hidden; }
+td.mono, td .links, td .chip { white-space: normal; }
+td.ids { white-space: normal; }
+.resetcols { font: inherit; font-size: 0.8rem; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+th, td { text-align: left; vertical-align: top; padding: 0.65rem 0.8rem; border-bottom: 1px solid var(--rule); }
+tr:last-child td { border-bottom: 0; }
+th { font-weight: 500; color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+td.t .title { font-weight: 500; line-height: 1.5; }
+td.t .auth { color: var(--muted); font-size: 0.8rem; }
+td.t .rel { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
+.mono { font-family: var(--f-mono); font-size: 0.8rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.links { display: grid; gap: 0.15rem; font-size: 0.82rem; white-space: nowrap; }
+.links .primary { font-weight: 500; }
+.mk { margin-top: 0.45rem; display: grid; gap: 0.3rem; justify-items: start; min-width: 0; max-width: 100%; }
+.mkbtn { max-width: 100%; white-space: normal; overflow-wrap: anywhere; font: inherit; font-size: 0.78rem; line-height: 1.4; padding: 0.25rem 0.6rem; border-radius: 5px; border: 1px solid var(--accent); background: var(--surface); color: var(--accent); cursor: pointer; text-align: left; }
+.mkbtn.go { background: var(--accent); color: var(--surface); }
+.mkbtn.ghost { border-color: var(--rule); color: var(--muted); }
+.mkbtn:disabled { opacity: 0.5; cursor: default; }
+.mkrow { display: flex; flex-wrap: wrap; gap: 0.3rem; max-width: 100%; }
+.mknote { font-size: 0.76rem; color: var(--muted); line-height: 1.5; white-space: normal; }
+.mknote.bad { color: var(--bad); }
+.unver { font-size: 0.72rem; color: var(--warn); }
+.empty { padding: 2rem 1rem; text-align: center; color: var(--muted); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.list { display: grid; gap: 0.5rem; margin: 0; padding: 0; list-style: none; font-size: 0.9rem; }
+.list li { min-width: 0; }
+.legend { font-size: 0.8rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; margin-top: 0.6rem; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dmain { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; }
+.bigbtn { display: inline-block; font: inherit; font-size: 0.95rem; font-weight: 500; padding: 0.55rem 1.2rem; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--surface); cursor: pointer; text-decoration: none; }
+.bigbtn:disabled { opacity: 0.55; cursor: default; }
+.linkbtn { font: inherit; font-size: 0.85rem; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+.linkbtn:disabled { color: var(--muted); cursor: default; }
+.dstate { font-size: 0.85rem; color: var(--muted); }
+#dpast summary { cursor: pointer; }
+.dis-item { display: flex; flex-wrap: wrap; gap: 0.2rem 0.7rem; align-items: baseline; padding: 0.45rem 0; border-top: 1px solid var(--rule); }
+.dis-item:first-child { border-top: 0; }
+.dis-item .q { flex: 1 1 18rem; min-width: 0; overflow-wrap: anywhere; }
+.dis-item details { flex-basis: 100%; font-size: 0.85rem; }
+.dis-item details div { white-space: pre-wrap; color: var(--muted); margin-top: 0.3rem; max-height: 24rem; overflow: auto; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow" id="lib-eyebrow">Literature monitor</div>
+  <h1 id="lib-name">Research Library</h1>
+  <p id="lib-desc">新着研究の台帳です。各論文の図表付き日本語解説と、原著全文に基づいて議論できるページ内チャットへのリンクを集めています。論文をまたいだ議論は、すぐ下の「論文横断の議論」からチャットで始められます。</p>
+</header>
+
+<section aria-labelledby="run-h">
+  <h2 id="run-h">最新の実行</h2>
+  <div id="run" class="run"><div class="note">実行記録を読み込み中…</div></div>
+</section>
+
+<section aria-labelledby="dis-h" id="dis-sec" hidden>
+  <h2 id="dis-h">論文横断の議論</h2>
+  <div class="run">
+    <div class="note">解説のある全論文の原著・図表・解説を読み込んだ Claude と、論文をまたいでチャットで議論できます。チャットは新しいタブ（Claude Code）で開きます。回答には論文・節・ページの出典が付きます。</div>
+    <div id="dmain"></div>
+    <div id="dnote" class="mknote" hidden></div>
+    <details id="dpast" hidden><summary class="note">過去の議論</summary><ul class="list" id="dlist" style="margin-top:0.4rem"></ul></details>
+  </div>
+</section>
+
+<section aria-labelledby="exp-h" id="exp-sec" hidden>
+  <h2 id="exp-h">データの保存</h2>
+  <div id="exp" class="run"></div>
+</section>
+
+<section aria-labelledby="led-h">
+  <h2 id="led-h">論文台帳</h2>
+  <div class="filters">
+    <label for="fq">検索</label><input id="fq" type="search" placeholder="タイトル・著者・ID・メモ">
+    <label for="fs">処理状況</label>
+    <select id="fs"><option value="">すべて</option></select>
+    <label for="fr">関連度</label>
+    <select id="fr"><option value="">すべて</option><option value="high">high</option><option value="medium">medium</option><option value="low">low</option><option value="excluded">excluded</option></select>
+    <label for="sk">並べ替え</label>
+    <select id="sk"><option value="relevance">関連度</option><option value="title">タイトル（アルファベット順）</option><option value="published">公開日</option><option value="checked">確認日</option></select>
+    <select id="so" aria-label="並び順"><option value="asc">昇順</option><option value="desc">降順</option></select>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="tbl"><table id="ledger">
+    <colgroup><col data-w="401"><col data-w="118"><col data-w="150"><col data-w="128"><col data-w="72"><col data-w="148"><col data-w="118"><col data-w="112"></colgroup>
+    <thead><tr><th id="th-title"><button type="button" class="sortbtn" data-k="title">論文<span class="arrow"></span></button></th><th id="th-date"><button type="button" class="sortbtn" data-k="published">公開<span class="arrow"></span></button> / <button type="button" class="sortbtn" data-k="checked">確認<span class="arrow"></span></button></th><th>識別子・版</th><th>査読</th><th>分類</th><th>関連度</th><th>処理状況</th><th>リンク</th></tr></thead>
+    <tbody id="rows"><tr><td colspan="8" class="empty">台帳を読み込み中…</td></tr></tbody>
+  </table></div>
+  <div class="legend">
+    <span>列の境目をドラッグすると幅を変えられます（ダブルクリックで元の幅。<button type="button" class="resetcols" id="resetcols">すべての列幅を元に戻す</button>）</span>
+    <span id="cat-legend" hidden></span>
+    <span><span class="chip c-acc">キー論文</span> = 新着がない日に、ライブラリの論文を議論するうえで鍵となる既発表論文として選んで解説したもの</span>
+    <span><span class="unver">メタデータ未照合</span> = 検索結果からの情報で、一次情報源とまだ照合していない</span>
+    <span>「今すぐ解説を作成」= 解説がない論文について、その場で作成用のセッションを起動する（編集権限のある人にだけ表示。完了すると通知が届き、この台帳に「解説を読む」が出る。起動できなかった依頼は次の定期実行で作成する。仕様書 §4.5）</span>
+  </div>
+</section>
+
+<div class="grid2">
+<section aria-labelledby="dig-h">
+  <h2 id="dig-h">Weekly Digest</h2>
+  <ul class="list" id="digests"><li class="note">最初のダイジェストは日曜に作成されます。</li></ul>
+</section>
+<section aria-labelledby="doc-h">
+  <h2 id="doc-h">運用文書</h2>
+  <ul class="list">
+    <li><a href="spec/operating-spec.md">運用仕様書</a>（探索・検証・解説・対話・台帳の手順）</li>
+    <li><a href="config/topic.json">テーマ設定</a>（ライブラリ名・分類・対象判定・各情報源の検索条件）</li>
+    <li>解説の修正・追加の依頼: 解説ページの該当箇所にコメントし「Send to Claude」で送るか @claude と書くと、毎朝の定期実行で原著と照合して反映し、スレッドに返信します（仕様書 §11）。</li>
+    <li>解説を読みながらのメモ: 解説ページの本文で文を選ぶと出る「メモ・依頼」ボタンで、その箇所にコメントを付けられます。「Send to Claude」を押さずに投稿したものはメモとして残り（解説の修正には使われません）、論文横断の議論で Claude が参照します（仕様書 §6.3）。</li>
+    <li>解説がない論文は、台帳の「関連度」列の「今すぐ解説を作成」ボタンでその場で作成を依頼できます（仕様書 §4.5）。</li>
+    <li>論文をまたいだ議論は、「論文横断の議論」の「議論を始める」から。全論文の資料を読み込んだチャットが新しいタブで開きます（仕様書 §4.7。スクリプト: <a href="scripts/build_corpus.py">議論用コーパスの作成</a> ・ <a href="scripts/corpus_search.py">論文横断の検索</a>）。</li>
+    <li><a href="templates/paper-template.html">論文解説ページのテンプレート</a></li>
+    <li>定期実行で使うスクリプト: <a href="scripts/arxiv_list.py">arXiv 一覧取得</a> ・ <a href="scripts/medrxiv_fetch.py">medRxiv 取得</a> ・ <a href="scripts/pubmed_fetch.py">PubMed 取得</a> ・ <a href="scripts/openreview_fetch.py">OpenReview 取得</a> ・ <a href="scripts/html_chunks.py">HTML 原著のチャンク化</a> ・ <a href="scripts/pdf_chunks.py">PDF 原著のチャンク化</a> ・ <a href="scripts/export_zip.py">ZIPの作成</a> ・ <a href="scripts/make_source.py">チャット資料の作成</a> ・ <a href="scripts/build_page.py">解説ページの組み立て</a> ・ <a href="scripts/crop.py">図の切り出し</a> ・ <a href="scripts/qa_search.cjs">検索の確認</a> ・ <a href="scripts/shot.cjs">表示の確認</a></li>
+  </ul>
+</section>
+</div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const STATUS = {
+  delivered: ["解説公開済み", "c-ok"], in_progress: ["作業中", "c-acc"], queued: ["解説待ち", "c-acc"],
+  fulltext_blocked: ["全文未取得", "c-bad"], update_pending: ["改訂の確認待ち", "c-warn"],
+  detected: ["検出のみ", "c-idle"], excluded: ["対象外", "c-idle"]
+};
+const SRC = { ok: "c-ok", blocked: "c-bad", error: "c-bad", partial: "c-warn", skipped: "c-idle" };
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+let papers = [], papersLoaded = false;
+// 分類 shows only the codes defined in config/topic.json (categories); source labels (cs.LG, neurology, OpenReview venues, PubMed types) belong in source_categories (spec §9).
+let CATS = new Set(["A", "B", "C", "D"]);
+// Theme settings (name, description, categories) come from the published config/topic.json; the page still works with the defaults above if it is missing.
+fetch("config/topic.json").then((r) => r.ok ? r.json() : null).then((c) => {
+  if (!c) return;
+  if (c.library_name) { document.title = c.library_name; $("#lib-name").textContent = c.library_name; }
+  if (c.description_ja) $("#lib-desc").textContent = c.description_ja;
+  if (c.schedule_ja) $("#lib-eyebrow").textContent = "Literature monitor · " + c.schedule_ja;
+  const cats = Object.entries(c.categories || {});
+  if (cats.length) {
+    CATS = new Set(cats.map(([k]) => k));
+    const l = $("#cat-legend"); l.textContent = "分類: " + cats.map(([k, v]) => k + " " + v).join(" ・ "); l.hidden = false;
+    render();
+  }
+}).catch(() => {});
+// Tolerate list fields stored as a comma-separated string (spec §155 says arrays; a malformed row must not blank the ledger).
+const arr = (v) => Array.isArray(v) ? v : typeof v === "string" && v.trim() ? v.split(/\s*,\s*/).filter(Boolean) : [];
+// On-demand explainers (spec §4.5): requests/{paper_id} records the ask; the button fires the on-demand scheduled task through the viewer's Claude Code Remote connector.
+let requests = {}, ondemand = null, canRequest = false, dbRef = null, mcpRef = null;
+const confirming = new Set(), busy = new Set(), notes = {};
+const REQ = { requested: ["作成を依頼済み", "c-acc"], in_progress: ["解説を作成中", "c-acc"], failed: ["作成できず", "c-bad"] };
+const hhmm = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }); };
+
+for (const [k, [label]] of Object.entries(STATUS)) $("#fs").insertAdjacentHTML("beforeend", `<option value="${k}">${label}</option>`);
+
+function link(href, text, cls = "") { return href ? `<a class="${cls}" href="${esc(href)}">${esc(text)}</a>` : ""; }
+
+function render() {
+  const q = $("#fq").value.trim().toLowerCase(), fs = $("#fs").value, fr = $("#fr").value;
+  const rel = { high: 0, medium: 1, low: 2, excluded: 3 };
+  const k = $("#sk").value, dir = $("#so").value === "desc" ? -1 : 1;
+  const val = (p) => k === "title" ? (p.title || "").trim() : k === "published" ? (p.first_published || "") : k === "checked" ? (p.last_checked || "") : (rel[p.relevance] ?? null);
+  const cmp = (a, b) => {
+    const va = val(a), vb = val(b), ea = va === "" || va === null, eb = vb === "" || vb === null;
+    if (ea || eb) return ea === eb ? 0 : ea ? 1 : -1; // missing values always last
+    const c = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb), "en", { sensitivity: "base", numeric: true });
+    return dir * c || String(b.first_published).localeCompare(String(a.first_published)) || String(a.title).localeCompare(String(b.title), "en");
+  };
+  syncSortUI(k, dir);
+  const list = papers.filter((p) => (!fs || p.status === fs) && (!fr || p.relevance === fr) &&
+    (!q || JSON.stringify([p.title, p.authors, p.ids, p.relevance_note, p.status_note, p.selection_reason]).toLowerCase().includes(q)))
+    .sort(cmp);
+  $("#count").textContent = `${list.length} / ${papers.length} 件`;
+  if (!papersLoaded) { $("#rows").innerHTML = `<tr><td colspan="8" class="empty">台帳を読み込み中…</td></tr>`; return; }
+  if (!papers.length) { $("#rows").innerHTML = `<tr><td colspan="8" class="empty">まだ論文が登録されていません。毎朝の探索で検出した論文がここに追加されます。</td></tr>`; return; }
+  if (!list.length) { $("#rows").innerHTML = `<tr><td colspan="8" class="empty">条件に合う論文がありません。</td></tr>`; return; }
+  $("#rows").innerHTML = list.map((p) => { try { return row(p); } catch (e) {
+    console.error("ledger row failed", p.id, e);
+    return `<tr><td class="t"><div class="title">${link(p.url, p.title) || esc(p.title || p.id)}</div><div class="unver">この行のデータの形式に問題があり、一部を表示できません（${esc(p.id)}）</div></td><td colspan="7"></td></tr>`;
+  } }).join("");
+}
+
+function row(p) {
+    const st = STATUS[p.status] || [p.status, "c-idle"]; const ids = p.ids || {}; const sl = p.source_links || {};
+    const au = arr(p.authors), authors = au.slice(0, 4).join(", ") + (au.length > 4 ? " ほか" : "");
+    return `<tr>
+      <td class="t"><div class="title">${link(p.url, p.title) || esc(p.title)}</div>
+        <div class="auth">${esc(authors)}</div>
+        ${p.relevance_note ? `<div class="rel">${esc(p.relevance_note)}</div>` : ""}
+        ${p.origin === "key_paper" ? `<div class="rel"><span class="chip c-acc">キー論文</span> ${esc(p.selection_reason || "")}</div>` : ""}
+        ${p.metadata_verified === false ? `<div class="unver">メタデータ未照合</div>` : ""}
+        ${p.substantive_update ? `<div class="rel"><span class="chip c-warn">実質的な改訂</span> ${esc(p.update_note)}</div>` : ""}</td>
+      <td class="mono">${esc(p.first_published)}<br><span style="color:var(--muted)">${esc(p.last_checked)}</span></td>
+      <td class="mono ids">${[ids.arxiv && "arXiv " + ids.arxiv, ids.doi && "doi " + ids.doi, ids.pmid && "PMID " + ids.pmid, p.version_checked].filter(Boolean).map(esc).join("<br>")}</td>
+      <td>${esc(p.peer_review || "")}${p.venue ? "<br><span class='auth'>" + esc(p.venue) + "</span>" : ""}</td>
+      <td class="mono">${esc(arr(p.categories).filter((c) => CATS.has(c)).join(" "))}</td>
+      <td>${esc(p.relevance || "")}${makeButton(p)}</td>
+      <td><span class="chip ${st[1]}">${esc(st[0])}</span>${p.status_note ? `<div class="auth" style="margin-top:0.3rem;max-width:16rem;white-space:normal">${esc(p.status_note)}</div>` : ""}${reqState(p)}</td>
+      <td><div class="links">${link(p.explainer_url, "解説を読む", "primary")}${link(p.chat_url, "原著と議論")}${link(sl.pdf, "原著PDF")}${link(sl.html, "論文ページ")}${link(sl.supplement, "補足資料")}${link(sl.code, "コード")}</div></td>
+    </tr>`;
+}
+
+// Request state sits under the status chip; the button, its confirmation and the outcome note sit under the relevance value.
+function reqState(p) {
+  const r = requests[p.id];
+  if (p.explainer_url || !r || !REQ[r.status]) return "";
+  const when = r.status === "in_progress" ? (r.started_at && "着手 " + hhmm(r.started_at)) : r.status === "requested" ? (r.requested_at && "依頼 " + hhmm(r.requested_at)) : "";
+  return `<div class="mk"><span class="chip ${REQ[r.status][1]}">${REQ[r.status][0]}</span>${when ? `<span class="mknote">${esc(when)}</span>` : ""}${r.status === "failed" && r.note ? `<div class="mknote bad">${esc(r.note)}</div>` : ""}</div>`;
+}
+
+function makeButton(p) {
+  if (p.explainer_url) return "";
+  const r = requests[p.id], id = esc(p.id), live = r && (r.status === "requested" || r.status === "in_progress");
+  let h = "";
+  if (canRequest && !(live && !r.fire_error)) {
+    const label = live ? "もう一度起動" : r && r.status === "failed" ? "もう一度依頼" : "今すぐ解説を作成";
+    h += confirming.has(p.id)
+      ? `<div class="mknote">原著を取得・検証して解説ページを作ります（目安 30〜60 分）。完了すると通知が届きます。</div>
+         <div class="mkrow"><button type="button" class="mkbtn go" data-act="go" data-id="${id}" ${busy.has(p.id) ? "disabled" : ""}>${busy.has(p.id) ? "起動中…" : "作成を開始"}</button><button type="button" class="mkbtn ghost" data-act="cancel" data-id="${id}" ${busy.has(p.id) ? "disabled" : ""}>やめる</button></div>`
+      : `<button type="button" class="mkbtn" data-act="ask" data-id="${id}">${label}</button>`;
+  }
+  if (notes[p.id]) h += `<div class="mknote${notes[p.id][1] ? " bad" : ""}">${esc(notes[p.id][0])}</div>`;
+  return h ? `<div class="mk">${h}</div>` : "";
+}
+
+const LATER = "依頼は記録したので、次の定期実行（毎朝 5:00 JST ごろ）で作成します。";
+function fireNote(code) {
+  switch (code) {
+    case "approval_required": case "not_in_manifest": case "consent_required":
+      return "Claude Code Remote コネクタの利用が許可されなかったため、すぐには起動できませんでした。" + LATER + "すぐに作る場合は、ページの権限設定で許可してから「もう一度起動」を押してください。";
+    case "needs_reauth": return "Claude Code Remote コネクタの再接続が必要です（claude.ai の設定 → コネクタ）。" + LATER;
+    case "server_not_connected": case "selection_required": case "server_not_found":
+      return "Claude Code Remote コネクタを使えないため、すぐには起動できませんでした（claude.ai の設定 → コネクタを確認）。" + LATER;
+    case "server_unavailable": case "upstream_error": case "cancelled":
+      return "起動できたか確認できませんでした。起動していれば完了時に通知が届き、この行が「解説を作成中」に変わります。起動していなければ次の定期実行（毎朝 5:00 JST ごろ）で作成します。";
+    case "tool_error": return "作成用の定期タスクを起動できませんでした。" + LATER;
+    case "no_trigger": return "作成用の定期タスクの設定が台帳にありません。" + LATER;
+    default: return "このビューではすぐに起動できません。" + LATER;
+  }
+}
+
+async function startNow(id) {
+  busy.add(id); delete notes[id]; render();
+  const now = new Date().toISOString();
+  try {
+    await dbRef.doc("requests/" + id).set({ paper_id: id, status: "requested", requested_at: now, via: "ledger_button" });
+  } catch (e) {
+    notes[id] = ["依頼を記録できませんでした（台帳への書き込み権限がないか、接続が切れています）。", true];
+    busy.delete(id); confirming.delete(id); render(); return;
+  }
+  let code = "";
+  if (!mcpRef) code = "unavailable";
+  else if (!ondemand || !ondemand.trigger_id) code = "no_trigger";
+  else {
+    try { await mcpRef.callTool("Claude Code Remote", "fire_trigger", { trigger_id: ondemand.trigger_id, text: "paper_id: " + id }); }
+    catch (e) { code = (e && e.code) || "upstream_error"; }
+  }
+  try { await dbRef.doc("requests/" + id).update(code ? { fire_error: code } : { fired_at: new Date().toISOString() }); } catch (e) {}
+  notes[id] = code ? [fireNote(code), code !== "server_unavailable" && code !== "upstream_error" && code !== "cancelled"]
+    : ["作成用のセッションを起動しました。完了すると通知が届き、この行に「解説を読む」が表示されます（目安 30〜60 分）。", false];
+  busy.delete(id); confirming.delete(id); render();
+}
+
+$("#rows").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const id = b.dataset.id;
+  if (b.dataset.act === "ask") { confirming.add(id); render(); }
+  else if (b.dataset.act === "cancel") { confirming.delete(id); render(); }
+  else if (b.dataset.act === "go" && !busy.has(id)) startNow(id);
+});
+
+// Whole-library ZIP (spec §4.6): the button fires a no-schedule task; that session collects every explainer and digest, builds the ZIP and sends it. exports/latest records the state.
+let exportDoc = null, exportCfg = null, expConfirm = false, expBusy = false, expNote = null;
+const EXP = { requested: ["作成を依頼済み", "c-acc"], in_progress: ["ZIPを作成中", "c-acc"], done: ["作成済み", "c-ok"], failed: ["作成できず", "c-bad"] };
+const EXP_TEXT = "解説・図表・原著の全文テキスト・論文台帳・Weekly Digest を1つのZIPにまとめます（目安 10〜30 分）。完了すると通知が届き、開いたセッションからZIPを保存できます。原著PDFは含みません。";
+
+function renderExport() {
+  if (!canRequest) return;
+  $("#exp-sec").hidden = false;
+  const e = exportDoc, at = e && (e.started_at || e.requested_at);
+  const fresh = at && Date.now() - new Date(at).getTime() < 3600000;
+  const live = e && (e.status === "requested" || e.status === "in_progress") && !e.fire_error && fresh;
+  let h = "";
+  if (e && EXP[e.status] && !(e.status === "requested" && e.fire_error)) {
+    const when = e.status === "done" ? e.finished_at && "作成 " + hhmm(e.finished_at) : at && hhmm(at);
+    const size = e.status === "done" && e.size_mb ? ` ・ ${e.size_mb} MB ・ ${e.files} ファイル` : "";
+    h += `<div class="run-head"><span class="chip ${EXP[e.status][1]}">${EXP[e.status][0]}</span><span class="note">${esc(when || "")}${esc(size)}</span></div>`;
+    if (e.status === "failed" && e.note) h += `<div class="mknote bad">${esc(e.note)}</div>`;
+  }
+  if (live) h += `<div class="note">完了すると通知が届きます。</div>`;
+  else if (expConfirm) h += `<div class="note">${EXP_TEXT}</div><div class="mkrow"><button type="button" class="mkbtn go" data-exp="go" ${expBusy ? "disabled" : ""}>${expBusy ? "起動中…" : "作成を開始"}</button><button type="button" class="mkbtn ghost" data-exp="cancel" ${expBusy ? "disabled" : ""}>やめる</button></div>`;
+  else h += `<div class="mkrow"><button type="button" class="mkbtn" data-exp="ask">全データをZIPで保存</button></div>`;
+  if (expNote) h += `<div class="mknote${expNote[1] ? " bad" : ""}">${esc(expNote[0])}</div>`;
+  $("#exp").innerHTML = h;
+}
+
+function exportFireNote(code) {
+  switch (code) {
+    case "approval_required": case "not_in_manifest": case "consent_required":
+      return "Claude Code Remote コネクタの利用が許可されなかったため、起動できませんでした。ページの権限設定で許可してから、もう一度押してください。";
+    case "needs_reauth": return "Claude Code Remote コネクタの再接続が必要です（claude.ai の設定 → コネクタ）。";
+    case "server_not_connected": case "selection_required": case "server_not_found":
+      return "Claude Code Remote コネクタを使えないため、起動できませんでした（claude.ai の設定 → コネクタを確認）。";
+    case "server_unavailable": case "upstream_error": case "cancelled":
+      return "起動できたか確認できませんでした。しばらく通知が届かない場合は、もう一度押してください。";
+    case "tool_error": return "ZIP作成用のタスクを起動できませんでした。";
+    case "no_trigger": return "ZIP作成用のタスクの設定が見つかりません。";
+    default: return "このビューでは起動できません。claude.ai でページを開いてください。";
+  }
+}
+
+async function startExport() {
+  expBusy = true; expNote = null; renderExport();
+  try {
+    await dbRef.doc("exports/latest").set({ status: "requested", requested_at: new Date().toISOString(), via: "library_button" });
+  } catch (e) {
+    expNote = ["依頼を記録できませんでした（書き込み権限がないか、接続が切れています）。", true];
+    expBusy = false; expConfirm = false; renderExport(); return;
+  }
+  let code = "";
+  if (!mcpRef) code = "unavailable";
+  else if (!exportCfg || !exportCfg.trigger_id) code = "no_trigger";
+  else {
+    try { await mcpRef.callTool("Claude Code Remote", "fire_trigger", { trigger_id: exportCfg.trigger_id, text: "export" }); }
+    catch (e) { code = (e && e.code) || "upstream_error"; }
+  }
+  try { await dbRef.doc("exports/latest").update(code ? { fire_error: code } : { fired_at: new Date().toISOString() }); } catch (e) {}
+  expNote = code ? [exportFireNote(code), code !== "server_unavailable" && code !== "upstream_error" && code !== "cancelled"] : null;
+  expBusy = false; expConfirm = false; renderExport();
+}
+
+$("#exp").addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-exp]"); if (!b) return;
+  if (b.dataset.exp === "ask") expConfirm = true;
+  else if (b.dataset.exp === "cancel") expConfirm = false;
+  else if (b.dataset.exp === "go" && !expBusy) { startExport(); return; }
+  renderExport();
+});
+
+// Cross-paper discussion (spec §4.7): one button fires a no-schedule task that starts a fresh Claude Code session with the whole library laid out as a corpus.
+// fire_trigger returns the new session's id (cse_…), so the page records discussions/session_… and shows the chat link at once; the session updates the same document as it prepares.
+let discussCfg = null, discussions = [], disBusy = false, disNote = null;
+const DIS = { preparing: ["準備中", "c-acc"], ready: ["準備済み", "c-ok"], failed: ["準備できず", "c-bad"] };
+const RECENT_MS = 7 * 86400000;
+
+function discussFireNote(code) {
+  if (code === "tool_error") return "議論のチャットを起動できませんでした。しばらくしてからもう一度押してください。";
+  if (code === "no_trigger") return "議論のチャット用のタスクの設定（config/discuss）が見つかりません。";
+  return exportFireNote(code);
+}
+
+function usableDiscussions() {
+  return discussions.filter((d) => d.session_url).sort((a, b) => String(b.started_at || "").localeCompare(String(a.started_at || "")));
+}
+
+function discussState(d) {
+  const age = d.started_at ? Date.now() - new Date(d.started_at).getTime() : 0;
+  if (d.status === "preparing" && age > 3600000) return ["準備が止まっている可能性", "c-warn"];
+  return DIS[d.status] || [d.status || "不明", "c-idle"];
+}
+
+function renderDiscuss() {
+  if (!canRequest) return;
+  $("#dis-sec").hidden = false;
+  const ds = usableDiscussions(), last = ds[0];
+  const recent = last && Date.now() - new Date(last.started_at).getTime() < RECENT_MS && last.status !== "failed";
+  let h = `<div class="dmain">`;
+  if (disBusy) h += `<button type="button" class="bigbtn" disabled>起動中…</button>`;
+  else if (recent) {
+    const st = discussState(last);
+    const when = hhmm(last.started_at);
+    const hint = last.status === "preparing" ? "資料を準備しています（2〜3 分）。開くと進み具合が見え、準備ができたらそのまま質問できます。" : "開いたチャットで質問を続けてください。";
+    h += `<a class="bigbtn" href="${esc(last.session_url)}" target="_blank" rel="noopener">議論を開く →</a>
+      <span class="dstate"><span class="chip ${st[1]}">${esc(st[0])}</span> ${esc(when)} 開始${last.title ? " ・ " + esc(last.title) : ""}<br>${esc(hint)}</span>
+      <button type="button" class="linkbtn" data-dis="new">新しい議論を始める</button>`;
+  } else h += `<button type="button" class="bigbtn" data-dis="new">議論を始める</button>`;
+  h += `</div>`;
+  $("#dmain").innerHTML = h;
+  const n = $("#dnote");
+  n.hidden = !disNote; n.textContent = disNote ? disNote[0] : ""; n.classList.toggle("bad", !!(disNote && disNote[1]));
+  const past = recent ? ds.slice(1) : ds;
+  $("#dpast").hidden = !past.length;
+  $("#dpast summary").textContent = `過去の議論（${past.length}）`;
+  $("#dlist").innerHTML = past.slice(0, 20).map((d) => {
+    const st = discussState(d), label = d.title || d.first_question || "";
+    return `<li class="dis-item"><span class="chip ${st[1]}">${esc(st[0])}</span><span class="mono">${esc(hhmm(d.started_at))}</span>
+      <span class="q">${esc(label.length > 90 ? label.slice(0, 90) + "…" : label)}</span><a href="${esc(d.session_url)}" target="_blank" rel="noopener">開く</a>
+      ${d.summary ? `<details><summary>議論のまとめ</summary><div>${esc(d.summary)}</div></details>` : ""}</li>`;
+  }).join("");
+}
+
+async function startDiscuss() {
+  if (disBusy) return;
+  disBusy = true; disNote = null; renderDiscuss();
+  let code = "", res = null;
+  if (!mcpRef) code = "unavailable";
+  else if (!discussCfg || !discussCfg.trigger_id) code = "no_trigger";
+  else {
+    try { res = await mcpRef.callTool("Claude Code Remote", "fire_trigger", { trigger_id: discussCfg.trigger_id, text: "論文横断の議論のチャットの起動（ライブラリのボタン）" }); }
+    catch (e) { code = (e && e.code) || "upstream_error"; }
+  }
+  if (!code) {
+    let m = null;
+    try { m = JSON.stringify(res).match(/\b(?:cse|session)_([A-Za-z0-9]{10,})/); } catch (e) {}
+    if (m) {
+      const id = "session_" + m[1], url = "https://claude.ai/code/" + id;
+      try { await dbRef.doc("discussions/" + id).set({ status: "preparing", started_at: new Date().toISOString(), session_url: url, first_question: "", via: "library_button" }); }
+      catch (e) { disNote = ["チャットは起動しましたが、この一覧に記録できませんでした。開くリンクは数十秒後にここに出ます。", false]; }
+    } else disNote = ["チャットを起動しました。開くリンクは数十秒後にここに出ます。", false];
+  } else disNote = [discussFireNote(code), code !== "server_unavailable" && code !== "upstream_error" && code !== "cancelled"];
+  disBusy = false; renderDiscuss();
+}
+$("#dis-sec").addEventListener("click", (e) => { const b = e.target.closest("button[data-dis]"); if (b && !b.disabled) startDiscuss(); });
+
+function renderRun(r) {
+  if (!r) { $("#run").innerHTML = `<div class="note">まだ実行記録がありません。</div>`; return; }
+  const src = Object.entries(r.sources || {}).map(([k, v]) => `<span class="chip ${SRC[v] || "c-idle"}">${esc(k)}: ${esc(v)}</span>`).join("");
+  $("#run").innerHTML = `<div class="run-head"><span class="date">${esc(r.id)}</span>
+      <span class="chip ${r.completed ? "c-ok" : "c-warn"}">${r.completed ? "完了" : "一部未完了"}</span>
+      <span class="note">探索期間 ${esc(r.window_start)} 〜 ${esc(r.window_end)} ・ 候補 ${(r.candidates || []).length} 件 ・ 解説公開 ${(r.delivered || []).length} 件</span></div>
+    <div class="sources">${src}</div>
+    ${r.notes ? `<div class="note">${esc(r.notes)}</div>` : ""}`;
+}
+
+(async () => {
+  const db = await window.claude?.use?.("db");
+  if (!db) { $("#rows").innerHTML = `<tr><td colspan="8" class="empty">このビューでは台帳データを読み込めません。claude.ai にサインインして開いてください。</td></tr>`; $("#run").innerHTML = `<div class="note">実行記録を表示できません。</div>`; return; }
+  const fail = (el) => () => { el.innerHTML = el.tagName === "TBODY" ? `<tr><td colspan="8" class="empty">台帳を読み込めませんでした。再読み込みしてください。</td></tr>` : `<div class="note">読み込めませんでした。</div>`; };
+  db.collection("papers").onSnapshot((snap) => { if (snap.docs.length || !snap.metadata?.fromCache) papersLoaded = true; papers = snap.docs.map((d) => ({ id: d.id, ...d.data() })); render(); }, fail($("#rows")));
+  db.collection("runs").orderBy("window_end", "desc").limit(1).onSnapshot((snap) => { const d = snap.docs[0]; renderRun(d ? { id: d.id, ...d.data() } : null); }, fail($("#run")));
+  dbRef = db;
+  db.collection("requests").onSnapshot((snap) => { requests = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()])); render(); }, () => {});
+  db.doc("config/ondemand").onSnapshot((d) => { ondemand = d.exists ? d.data() : null; }, () => {});
+  db.doc("config/export").onSnapshot((d) => { exportCfg = d.exists ? d.data() : null; }, () => {});
+  db.doc("exports/latest").onSnapshot((d) => { exportDoc = d.exists ? d.data() : null; renderExport(); }, () => {});
+  db.doc("config/discuss").onSnapshot((d) => { discussCfg = d.exists ? d.data() : null; }, () => {});
+  db.collection("discussions").onSnapshot((snap) => { discussions = snap.docs.map((d) => ({ id: d.id, ...d.data() })); renderDiscuss(); }, () => {});
+  window.claude.use("user").then(async (u) => { canRequest = !!(u && await u.canEdit()); if (canRequest) { render(); renderExport(); renderDiscuss(); } }).catch(() => {});
+  window.claude.use("mcp").then((m) => { mcpRef = m; }).catch(() => {});
+  db.collection("digests").onSnapshot((snap) => {
+    const ds = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => String(b.id).localeCompare(String(a.id)));
+    if (ds.length) $("#digests").innerHTML = ds.map((d) => `<li>${link(d.url, d.id + "（" + (d.week_start || "") + " 〜 " + (d.week_end || "") + "）")} <span class="auth">${esc((d.papers || []).length)} 件</span></li>`).join("");
+  }, () => {});
+})();
+function syncSortUI(k, dir) {
+  document.querySelectorAll(".sortbtn").forEach((b) => {
+    const on = b.dataset.k === k; b.classList.toggle("on", on);
+    b.querySelector(".arrow").textContent = on ? (dir > 0 ? "↑" : "↓") : "";
+    b.setAttribute("aria-label", b.textContent.replace(/[↑↓]/g, "") + (on ? (dir > 0 ? "（昇順で並べ替え中）" : "（降順で並べ替え中）") : "で並べ替え"));
+  });
+  $("#th-title").setAttribute("aria-sort", k === "title" ? (dir > 0 ? "ascending" : "descending") : "none");
+  $("#th-date").setAttribute("aria-sort", k === "published" || k === "checked" ? (dir > 0 ? "ascending" : "descending") : "none");
+}
+function saveSort() { try { localStorage.setItem("ledger-sort", JSON.stringify([$("#sk").value, $("#so").value])); } catch (e) {} }
+try { const [k, o] = JSON.parse(localStorage.getItem("ledger-sort") || "[]"); if (k) $("#sk").value = k; if (o) $("#so").value = o; } catch (e) {}
+document.querySelectorAll(".sortbtn").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.k;
+  if ($("#sk").value === k) $("#so").value = $("#so").value === "asc" ? "desc" : "asc";
+  else { $("#sk").value = k; $("#so").value = k === "title" ? "asc" : "desc"; }
+  saveSort(); render();
+}));
+["#sk", "#so"].forEach((s) => $(s).addEventListener("input", () => { saveSort(); render(); }));
+["#fq", "#fs", "#fr"].forEach((s) => $(s).addEventListener("input", render));
+
+// Column widths: drag the grip at each header's right edge (or focus it and use ←/→); stored per browser.
+(() => {
+  const table = $("#ledger"), cols = [...table.querySelectorAll("col")], ths = [...table.querySelectorAll("thead th")];
+  const MIN = 48, DEF = cols.map((c) => +c.dataset.w);
+  let w = DEF.slice();
+  try { const s = JSON.parse(localStorage.getItem("ledger-cols") || "null"); if (Array.isArray(s) && s.length === DEF.length && s.every((x) => x >= MIN)) w = s; } catch (e) {}
+  const apply = () => { cols.forEach((c, i) => (c.style.width = w[i] + "px")); table.style.width = w.reduce((a, b) => a + b, 0) + "px"; };
+  const save = () => { try { localStorage.setItem("ledger-cols", JSON.stringify(w)); } catch (e) {} };
+  ths.forEach((th, i) => {
+    const g = document.createElement("span");
+    g.className = "colgrip"; g.tabIndex = 0; g.setAttribute("role", "separator"); g.setAttribute("aria-orientation", "vertical");
+    g.setAttribute("aria-label", th.textContent.replace(/[↑↓]/g, "").trim() + " の列幅（←→で調整、ダブルクリックで元に戻す）");
+    th.appendChild(g);
+    g.addEventListener("pointerdown", (e) => {
+      e.preventDefault(); g.setPointerCapture(e.pointerId); g.classList.add("drag");
+      const x0 = e.clientX, w0 = w[i];
+      const move = (ev) => { w[i] = Math.max(MIN, Math.round(w0 + ev.clientX - x0)); apply(); };
+      const up = () => { g.classList.remove("drag"); g.removeEventListener("pointermove", move); g.removeEventListener("pointerup", up); g.removeEventListener("pointercancel", up); save(); };
+      g.addEventListener("pointermove", move); g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
+    });
+    g.addEventListener("dblclick", () => { w[i] = DEF[i]; apply(); save(); });
+    g.addEventListener("keydown", (e) => {
+      const d = e.key === "ArrowLeft" ? -16 : e.key === "ArrowRight" ? 16 : 0;
+      if (d) { e.preventDefault(); w[i] = Math.max(MIN, w[i] + d); apply(); save(); }
+    });
+    g.addEventListener("click", (e) => e.stopPropagation());
+  });
+  $("#resetcols").addEventListener("click", () => { w = DEF.slice(); apply(); save(); });
+  apply();
+})();
+</script>
+
+</body></html>

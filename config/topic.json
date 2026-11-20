@@ -1,0 +1,55 @@
+{
+  "_comment": "テーマ設定。監視したい研究テーマに合わせて書き換える。値の意味は docs/configuration.md。記入例は config/examples/。",
+
+  "library_name": "Research Library",
+  "short_name": "Research Library",
+  "field_ja": "〇〇の研究",
+  "description_ja": "〇〇の新着研究の台帳です。各論文の図表付き日本語解説と、原著全文に基づいて議論できるページ内チャットへのリンクを集めています。論文をまたいだ議論は、すぐ下の「論文横断の議論」からチャットで始められます。",
+  "library_url": "",
+  "timezone": "Asia/Tokyo",
+  "schedule_ja": "毎日 5:00 JST 探索（新着がない日はキー論文を解説） · 日曜 Weekly Digest",
+
+  "categories": {
+    "A": "分類Aの名前",
+    "B": "分類Bの名前",
+    "C": "分類Cの名前",
+    "D": "分類Dの名前"
+  },
+
+  "scope": {
+    "include": "対象とする研究の条件（1〜3文）。",
+    "exclude": [
+      "対象外とする研究の条件1",
+      "新規性・知見に乏しい紹介記事（ただしテーマの理解に直接貢献すれば対象）"
+    ],
+    "key_paper_scope": "キー論文（新着がない日に解説する既発表論文）の対象範囲。テーマと無関係な一般論文を除くための条件。",
+    "preprints": "プレプリントは正式対象（査読状況は記録）。"
+  },
+
+  "search_terms": [
+    "テーマの語 × 手法の語 の組み合わせを、モデル名・課題・学習法・データ種別で広く並べる"
+  ],
+  "known_names": [
+    "WebSearch で補完するときのモデル名・データセット名など"
+  ],
+
+  "sources": {
+    "arxiv": {
+      "categories": ["cs.LG", "cs.AI"],
+      "title_regex": "keyword1|keyword2"
+    },
+    "medrxiv": {
+      "server": "medrxiv",
+      "topic_regex": "keyword1|keyword2",
+      "method_regex": "foundation model|pre-?train|self-supervised|transformer|language model"
+    },
+    "pubmed": {
+      "term": "(keyword1[tiab] OR keyword2[tiab]) AND (\"foundation model*\"[tiab] OR pretrain*[tiab])"
+    },
+    "openreview": {
+      "terms": ["keyword1", "keyword2"]
+    }
+  },
+
+  "chat_example_question": "この方法を別のタスクに応用するなら、何を変更する必要がありますか？"
+}
