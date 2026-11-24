@@ -42,6 +42,24 @@ a { color: var(--accent); }
 .filters { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; margin-bottom: 0.8rem; font-size: 0.85rem; }
 .filters input, .filters select { font: inherit; font-size: 0.85rem; padding: 0.35rem 0.55rem; border: 1px solid var(--rule); border-radius: 5px; background: var(--surface); color: var(--fg); }
 .filters input { min-width: 0; width: 18rem; max-width: 100%; }
+/* Multi-select facets: each option is a real checkbox drawn as a toggle chip; none checked in a group = no filter on that group. */
+.facets { display: grid; gap: 0.55rem; margin-bottom: 0.9rem; font-size: 0.85rem; }
+.facet { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 0.8rem; margin: 0; padding: 0; border: 0; min-width: 0; }
+.facet legend { float: left; padding: 0; width: 4.6rem; color: var(--fg); }
+.facet .opts { display: flex; flex-wrap: wrap; gap: 0.35rem; min-width: 0; flex: 1 1 20rem; }
+.fchip { position: relative; display: inline-flex; cursor: pointer; }
+.fchip input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.fchip .face { display: inline-flex; align-items: baseline; gap: 0.35rem; padding: 0.18rem 0.65rem; border: 1px solid var(--rule); border-radius: 99px; background: var(--surface); color: var(--muted); font-size: 0.8rem; line-height: 1.5; white-space: nowrap; user-select: none; }
+.fchip .face::before { content: ""; width: 0.55rem; height: 0.55rem; border-radius: 2px; border: 1px solid currentColor; align-self: center; flex: none; }
+.fchip:hover .face { border-color: var(--accent); color: var(--fg); }
+.fchip input:checked + .face { background: var(--accent-soft); border-color: var(--accent); color: var(--fg); font-weight: 500; }
+.fchip input:checked + .face::before { background: var(--accent); border-color: var(--accent); }
+.fchip input:focus-visible + .face { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fchip .n { font-family: var(--f-mono); font-size: 0.74rem; color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 400; }
+.fchip.zero .face { opacity: 0.55; }
+.facet-actions { display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; align-items: baseline; padding-left: 5.4rem; }
+.facet-actions .fstate { color: var(--muted); font-size: 0.8rem; }
+@media (max-width: 560px) { .facet legend { float: none; width: 100%; } .facet-actions { padding-left: 0; } }
 .count { color: var(--muted); font-variant-numeric: tabular-nums; }
 .wrap > *, .grid2 > * { min-width: 0; }
 .sortbtn { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; white-space: nowrap; }
@@ -129,14 +147,15 @@ td.t .rel { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
   <h2 id="led-h">論文台帳</h2>
   <div class="filters">
     <label for="fq">検索</label><input id="fq" type="search" placeholder="タイトル・著者・ID・メモ">
-    <label for="fs">処理状況</label>
-    <select id="fs"><option value="">すべて</option></select>
-    <label for="fr">関連度</label>
-    <select id="fr"><option value="">すべて</option><option value="high">high</option><option value="medium">medium</option><option value="low">low</option><option value="excluded">excluded</option></select>
     <label for="sk">並べ替え</label>
     <select id="sk"><option value="relevance">関連度</option><option value="title">タイトル（アルファベット順）</option><option value="published">公開日</option><option value="checked">確認日</option></select>
     <select id="so" aria-label="並び順"><option value="asc">昇順</option><option value="desc">降順</option></select>
     <span class="count" id="count"></span>
+  </div>
+  <div class="facets">
+    <fieldset class="facet" id="fs"><legend>処理状況</legend><div class="opts"></div></fieldset>
+    <fieldset class="facet" id="fr"><legend>関連度</legend><div class="opts"></div></fieldset>
+    <div class="facet-actions"><span class="fstate" id="fstate"></span><button type="button" class="resetcols" id="fdefault">既定に戻す（excluded を隠す）</button><button type="button" class="resetcols" id="fclear">選択をすべて解除</button></div>
   </div>
   <div class="tbl"><table id="ledger">
     <colgroup><col data-w="401"><col data-w="118"><col data-w="150"><col data-w="128"><col data-w="72"><col data-w="148"><col data-w="118"><col data-w="112"></colgroup>
@@ -206,12 +225,45 @@ const confirming = new Set(), busy = new Set(), notes = {};
 const REQ = { requested: ["作成を依頼済み", "c-acc"], in_progress: ["解説を作成中", "c-acc"], failed: ["作成できず", "c-bad"] };
 const hhmm = (iso) => { const d = new Date(iso); return isNaN(d) ? "" : d.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }); };
 
-for (const [k, [label]] of Object.entries(STATUS)) $("#fs").insertAdjacentHTML("beforeend", `<option value="${k}">${label}</option>`);
+// Facets (multi-select): within a group any checked value matches; groups and the search box combine with AND; a group with nothing checked does not filter.
+// Default view hides relevance "excluded": until the viewer changes the relevance group, it means "every relevance value except excluded".
+const NONE = "__none";
+const REL_ORDER = ["high", "medium", "low", "excluded"];
+const stKey = (p) => p.status || NONE, relKey = (p) => p.relevance || NONE;
+let selSt = new Set(), selRel = new Set(), relDefault = true;
+try {
+  const s = JSON.parse(localStorage.getItem("ledger-filters") || "null");
+  if (s && s.v === 1) { selSt = new Set(arr(s.status)); if (Array.isArray(s.rel)) { selRel = new Set(s.rel); relDefault = false; } }
+} catch (e) {}
+function saveFilters() { try { localStorage.setItem("ledger-filters", JSON.stringify({ v: 1, status: [...selSt], rel: relDefault ? null : [...selRel] })); } catch (e) {} }
+// Options: the known values in a fixed order, plus any other value found in the data (and "unset"), so no paper is unreachable.
+function relKeys() {
+  const seen = new Set(papers.map(relKey));
+  return [...REL_ORDER, ...[...seen].filter((k) => !REL_ORDER.includes(k)).sort()];
+}
+function stKeys() {
+  const seen = new Set(papers.map(stKey));
+  return [...Object.keys(STATUS), ...[...seen].filter((k) => !STATUS[k]).sort()];
+}
+const effRel = () => relDefault ? new Set(relKeys().filter((k) => k !== "excluded")) : selRel;
+const stLabel = (k) => k === NONE ? "（未設定）" : (STATUS[k] ? STATUS[k][0] : k);
+const relLabel = (k) => k === NONE ? "（未設定）" : k;
+function facetHTML(name, k, label) { return `<label class="fchip"><input type="checkbox" name="${name}" value="${esc(k)}"><span class="face">${esc(label)} <span class="n"></span></span></label>`; }
+function syncFacet(sel, keys, labelOf, checked, counts) {
+  const box = $(sel + " .opts"), sig = keys.join("\u0001");
+  if (box.dataset.sig !== sig) { box.innerHTML = keys.map((k) => facetHTML(sel.slice(1), k, labelOf(k))).join(""); box.dataset.sig = sig; }
+  box.querySelectorAll("input").forEach((i) => {
+    const n = counts[i.value] || 0;
+    i.checked = checked.has(i.value);
+    i.closest(".fchip").classList.toggle("zero", !n);
+    i.nextElementSibling.querySelector(".n").textContent = papersLoaded ? n : "";
+  });
+}
 
 function link(href, text, cls = "") { return href ? `<a class="${cls}" href="${esc(href)}">${esc(text)}</a>` : ""; }
 
 function render() {
-  const q = $("#fq").value.trim().toLowerCase(), fs = $("#fs").value, fr = $("#fr").value;
+  const q = $("#fq").value.trim().toLowerCase(), fRel = effRel();
   const rel = { high: 0, medium: 1, low: 2, excluded: 3 };
   const k = $("#sk").value, dir = $("#so").value === "desc" ? -1 : 1;
   const val = (p) => k === "title" ? (p.title || "").trim() : k === "published" ? (p.first_published || "") : k === "checked" ? (p.last_checked || "") : (rel[p.relevance] ?? null);
@@ -222,9 +274,18 @@ function render() {
     return dir * c || String(b.first_published).localeCompare(String(a.first_published)) || String(a.title).localeCompare(String(b.title), "en");
   };
   syncSortUI(k, dir);
-  const list = papers.filter((p) => (!fs || p.status === fs) && (!fr || p.relevance === fr) &&
-    (!q || JSON.stringify([p.title, p.authors, p.ids, p.relevance_note, p.status_note, p.selection_reason]).toLowerCase().includes(q)))
-    .sort(cmp);
+  const qOk = (p) => !q || JSON.stringify([p.title, p.authors, p.ids, p.relevance_note, p.status_note, p.selection_reason]).toLowerCase().includes(q);
+  const stOk = (p) => !selSt.size || selSt.has(stKey(p)), relOk = (p) => !fRel.size || fRel.has(relKey(p));
+  // Each chip counts the papers it would show given the search and the other group's choice.
+  const cSt = {}, cRel = {};
+  for (const p of papers) { if (!qOk(p)) continue; if (relOk(p)) cSt[stKey(p)] = (cSt[stKey(p)] || 0) + 1; if (stOk(p)) cRel[relKey(p)] = (cRel[relKey(p)] || 0) + 1; }
+  syncFacet("#fs", stKeys(), stLabel, selSt, cSt);
+  syncFacet("#fr", relKeys(), relLabel, fRel, cRel);
+  const hiddenEx = relDefault ? papers.filter((p) => relKey(p) === "excluded").length : 0;
+  $("#fstate").textContent = relDefault && hiddenEx ? `excluded の ${hiddenEx} 件を隠しています` : "";
+  $("#fdefault").hidden = relDefault && !selSt.size;
+  $("#fclear").hidden = !selSt.size && !relDefault && !selRel.size;
+  const list = papers.filter((p) => stOk(p) && relOk(p) && qOk(p)).sort(cmp);
   $("#count").textContent = `${list.length} / ${papers.length} 件`;
   if (!papersLoaded) { $("#rows").innerHTML = `<tr><td colspan="8" class="empty">台帳を読み込み中…</td></tr>`; return; }
   if (!papers.length) { $("#rows").innerHTML = `<tr><td colspan="8" class="empty">まだ論文が登録されていません。毎朝の探索で検出した論文がここに追加されます。</td></tr>`; return; }
@@ -515,7 +576,18 @@ document.querySelectorAll(".sortbtn").forEach((b) => b.addEventListener("click",
   saveSort(); render();
 }));
 ["#sk", "#so"].forEach((s) => $(s).addEventListener("input", () => { saveSort(); render(); }));
-["#fq", "#fs", "#fr"].forEach((s) => $(s).addEventListener("input", render));
+$("#fq").addEventListener("input", render);
+$("#fs").addEventListener("change", (e) => {
+  const i = e.target.closest("input"); if (!i) return;
+  i.checked ? selSt.add(i.value) : selSt.delete(i.value); saveFilters(); render();
+});
+$("#fr").addEventListener("change", (e) => {
+  const i = e.target.closest("input"); if (!i) return;
+  if (relDefault) { selRel = effRel(); relDefault = false; }
+  i.checked ? selRel.add(i.value) : selRel.delete(i.value); saveFilters(); render();
+});
+$("#fclear").addEventListener("click", () => { selSt = new Set(); selRel = new Set(); relDefault = false; saveFilters(); render(); });
+$("#fdefault").addEventListener("click", () => { selSt = new Set(); selRel = new Set(); relDefault = true; saveFilters(); render(); });
 
 // Column widths: drag the grip at each header's right edge (or focus it and use ←/→); stored per browser.
 (() => {
